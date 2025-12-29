@@ -1,11 +1,12 @@
 'use client';
 
 import { notFound, useRouter } from "next/navigation";
-import { ReportHeader } from "@/components/report-header";
-import { ReportSummaryChart } from "@/components/report-summary-chart";
-import { TestDetails } from "@/components/test-details";
+import { ReportHeader } from "@/components/screens/report-header";
+import { ReportSummaryChart } from "@/components/screens/report-summary-chart";
+import { TestDetails } from "@/components/screens/test-details";
 import React from "react";
 import type { TestRun } from "@/types";
+import { Button } from "@/components/ui/button";
 
 type ReportPageProps = {
   params: {
