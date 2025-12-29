@@ -1,8 +1,11 @@
+'use client';
+
 import { notFound } from "next/navigation";
-import { testRuns } from "@/lib/test-data";
 import { ReportHeader } from "@/components/report-header";
 import { ReportSummaryChart } from "@/components/report-summary-chart";
 import { TestDetails } from "@/components/test-details";
+import React from "react";
+import type { TestRun } from "@/types";
 
 type ReportPageProps = {
   params: {
@@ -11,10 +14,26 @@ type ReportPageProps = {
 };
 
 export default function ReportPage({ params }: ReportPageProps) {
-  const run = testRuns.find((r) => r.runId === params.runId);
+  const [run, setRun] = React.useState<TestRun | undefined>(undefined);
+
+  React.useEffect(() => {
+    const savedRuns = localStorage.getItem('testRuns');
+    if (savedRuns) {
+      const runs: TestRun[] = JSON.parse(savedRuns);
+      const currentRun = runs.find((r) => r.runId === params.runId);
+      if (currentRun) {
+        setRun(currentRun);
+      } else {
+        notFound();
+      }
+    } else {
+      notFound();
+    }
+  }, [params.runId]);
+
 
   if (!run) {
-    notFound();
+    return <div>Loading...</div>;
   }
 
   return (

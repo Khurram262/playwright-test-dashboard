@@ -3,6 +3,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const screenshot1 = PlaceHolderImages.find(img => img.id === 'test-screenshot-1');
 
+// This file now acts as a source for initial or fallback data.
+// The main data source is now managed in the page component and localStorage.
 export const testRuns: TestRun[] = [
   {
     runId: "run-20240520-1",

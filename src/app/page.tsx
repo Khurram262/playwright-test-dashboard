@@ -1,5 +1,7 @@
+'use client';
+
 import Link from "next/link";
-import { testRuns } from "@/lib/test-data";
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -13,31 +15,160 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTestRunSummary } from "@/lib/utils";
 import { Logo } from "@/components/logo";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Upload } from "lucide-react";
+import type { TestRun } from '@/types';
 
 export default function Home() {
-  const runs = testRuns.sort((a, b) => new Date(b.executionDate).getTime() - new Date(a.executionDate).getTime());
+  const [runs, setRuns] = React.useState<TestRun[]>([]);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  React.useEffect(() => {
+    // Load runs from localStorage on initial render
+    const savedRuns = localStorage.getItem('testRuns');
+    if (savedRuns) {
+      setRuns(JSON.parse(savedRuns));
+    }
+  }, []);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+  
+  const processFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const json = JSON.parse(text);
+
+        // Basic validation to check if it looks like a playwright report
+        if (json.config && json.suites) {
+          const newRun: TestRun = {
+            runId: `run-${new Date().toISOString()}`,
+            executionDate: new Date().toISOString(),
+            tests: json.suites.flatMap((suite: any) => suite.specs).map((spec: any, index: number) => ({
+              id: spec.id || `test-${index}`,
+              name: spec.title,
+              description: spec.title,
+              duration: spec.tests[0]?.results[0]?.duration || 0,
+              status: spec.tests[0]?.status,
+              error: spec.tests[0]?.error?.message,
+              errorLog: spec.tests[0]?.error?.stack,
+              attachments: [],
+            }))
+          };
+          
+          setRuns(prevRuns => {
+            const updatedRuns = [newRun, ...prevRuns];
+            localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+            return updatedRuns;
+          });
+
+        } else if (Array.isArray(json) && json.every(item => 'runId' in item)) {
+          // It looks like an array of TestRun objects, likely from a previous export
+          setRuns(prevRuns => {
+            const newRuns = [...json, ...prevRuns];
+            // remove duplicates
+            const uniqueRuns = Array.from(new Map(newRuns.map(run => [run.runId, run])).values());
+            localStorage.setItem('testRuns', JSON.stringify(uniqueRuns));
+            return uniqueRuns;
+          });
+        }
+        else {
+          alert("Invalid file format. Please upload a Playwright JSON report.");
+        }
+      } catch (error) {
+        console.error("Error parsing JSON:", error);
+        alert("Error parsing JSON file. Make sure it is a valid JSON report.");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
+    if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+      processFile(event.dataTransfer.files[0]);
+      event.dataTransfer.clearData();
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+  
+  const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const sortedRuns = runs.sort((a, b) => new Date(b.executionDate).getTime() - new Date(a.executionDate).getTime());
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       <main className="max-w-7xl mx-auto">
-        <header className="flex items-center gap-4 mb-8">
-          <Logo className="h-10 w-10 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold font-headline text-foreground">
-              Playwright Report Exporter
-            </h1>
-            <p className="text-muted-foreground">
-              Dashboard for test execution results.
-            </p>
+        <header className="flex items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <Logo className="h-10 w-10 text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold font-headline text-foreground">
+                Playwright Report Exporter
+              </h1>
+              <p className="text-muted-foreground">
+                Dashboard for test execution results.
+              </p>
+            </div>
           </div>
+          <Button onClick={() => fileInputRef.current?.click()}>
+            <Upload className="mr-2 h-4 w-4" />
+            Upload Report
+          </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept="application/json"
+          />
         </header>
 
-        <Card className="shadow-lg">
+        <Card 
+          className={`shadow-lg transition-all ${isDragging ? 'border-primary' : ''}`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+        >
           <CardHeader>
             <CardTitle>Test Runs</CardTitle>
           </CardHeader>
           <CardContent>
+             {sortedRuns.length === 0 ? (
+              <div 
+                className="text-center py-12 border-2 border-dashed rounded-lg cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-medium text-foreground">No test runs found</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Drag and drop a Playwright JSON report here, or click to upload.
+                </p>
+              </div>
+            ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -51,7 +182,7 @@ export default function Home() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {runs.map((run) => {
+                {sortedRuns.map((run) => {
                   const summary = getTestRunSummary(run);
                   return (
                     <TableRow key={run.runId}>
@@ -87,6 +218,7 @@ export default function Home() {
                 })}
               </TableBody>
             </Table>
+            )}
           </CardContent>
         </Card>
       </main>

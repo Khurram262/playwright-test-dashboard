@@ -1,11 +1,14 @@
+'use client';
+
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { testRuns } from "@/lib/test-data";
 import { getTestRunSummary } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, Clock, FileText, MinusCircle, XCircle } from "lucide-react";
+import React from "react";
+import type { TestRun } from "@/types";
 
 type ReportPdfPageProps = {
   params: {
@@ -21,17 +24,38 @@ const StatusIcon = ({ status }: { status: 'passed' | 'failed' | 'skipped' }) => 
 };
 
 export default function ReportPdfPage({ params }: ReportPdfPageProps) {
-  const run = testRuns.find((r) => r.runId === params.runId);
+  const [run, setRun] = React.useState<TestRun | undefined>(undefined);
+
+  React.useEffect(() => {
+    const savedRuns = localStorage.getItem('testRuns');
+    if (savedRuns) {
+      const runs: TestRun[] = JSON.parse(savedRuns);
+      const currentRun = runs.find((r) => r.runId === params.runId);
+      if (currentRun) {
+        setRun(currentRun);
+      } else {
+        notFound();
+      }
+    } else {
+      notFound();
+    }
+  }, [params.runId]);
+  
+  React.useEffect(() => {
+    if(run) {
+      setTimeout(() => window.print(), 500);
+    }
+  }, [run]);
 
   if (!run) {
-    notFound();
+    return <div>Loading report for printing...</div>;
   }
 
   const summary = getTestRunSummary(run);
 
   return (
     <div className="bg-white text-black p-8 print-container">
-      <header className="flex justify-between items-center mb-8 print-break-inside-avoid">
+      <header className="flex justify-between items-center mb-8 print-break-inside-avoid no-print">
         <div>
           <h1 className="text-3xl font-bold font-headline">Test Execution Report</h1>
           <p className="text-gray-600">Run ID: {run.runId}</p>
@@ -40,9 +64,16 @@ export default function ReportPdfPage({ params }: ReportPdfPageProps) {
           </p>
         </div>
         <p className="text-sm text-gray-500">
-          Use your browser's print functionality (Ctrl/Cmd + P) to save as PDF.
+          Your report is being prepared for printing. If the print dialog doesn't appear automatically, please use your browser's print functionality (Ctrl/Cmd + P) to save as PDF.
         </p>
       </header>
+       <div className="hidden print:block mb-8">
+        <h1 className="text-3xl font-bold font-headline">Test Execution Report</h1>
+        <p className="text-gray-600">Run ID: {run.runId}</p>
+        <p className="text-gray-600">
+          Executed on: {new Date(run.executionDate).toLocaleString()}
+        </p>
+      </div>
 
       <section className="mb-8 print-break-inside-avoid">
         <h2 className="text-2xl font-semibold mb-4 font-headline">Summary</h2>
