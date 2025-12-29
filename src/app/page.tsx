@@ -245,7 +245,7 @@ export default function Home() {
                       <TableCell>
                         <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
                           {summary.failed}
-                        </badge>
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
