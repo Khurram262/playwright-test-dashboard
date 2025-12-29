@@ -17,18 +17,96 @@ import { getTestRunSummary } from "@/lib/utils";
 import { Logo } from "@/components/logo";
 import { ArrowRight, Upload } from "lucide-react";
 import type { TestRun } from '@/types';
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const [runs, setRuns] = React.useState<TestRun[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const { toast } = useToast();
 
+  const processJsonReport = (json: any) => {
+    // Basic validation to check if it looks like a playwright report
+    if (json.config && json.suites) {
+      const newRun: TestRun = {
+        runId: `run-${new Date().toISOString()}`,
+        executionDate: new Date().toISOString(),
+        tests: json.suites.flatMap((suite: any) => 
+          suite.specs.flatMap((spec: any) => 
+            spec.tests.map((test: any, index: number) => ({
+              id: spec.id || `${spec.title}-${index}`,
+              name: spec.title,
+              description: `Location: ${spec.file}:${spec.line}:${spec.column}`,
+              duration: test.results[0]?.duration || 0,
+              status: test.status === 'timedOut' ? 'failed' : test.status,
+              error: test.error?.message,
+              errorLog: test.error?.stack,
+              attachments: [], // Attachments are not in the json report by default
+            }))
+          )
+        )
+      };
+      
+      setRuns(prevRuns => {
+        const updatedRuns = [newRun, ...prevRuns];
+        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+        return updatedRuns;
+      });
+      toast({
+        title: "Report Loaded",
+        description: `Successfully loaded ${newRun.tests.length} tests.`,
+      })
+
+    } else if (Array.isArray(json) && json.every(item => 'runId' in item)) {
+      // It looks like an array of TestRun objects, likely from a previous export
+      setRuns(prevRuns => {
+        const newRuns = [...json, ...prevRuns];
+        // remove duplicates
+        const uniqueRuns = Array.from(new Map(newRuns.map(run => [run.runId, run])).values());
+        localStorage.setItem('testRuns', JSON.stringify(uniqueRuns));
+        return uniqueRuns;
+      });
+       toast({
+        title: "Reports Imported",
+        description: `Successfully imported ${json.length} test runs.`,
+      })
+    }
+    else {
+      toast({
+        variant: "destructive",
+        title: "Invalid File Format",
+        description: "Please upload a Playwright JSON report.",
+      })
+    }
+  }
+  
   React.useEffect(() => {
     // Load runs from localStorage on initial render
     const savedRuns = localStorage.getItem('testRuns');
     if (savedRuns) {
       setRuns(JSON.parse(savedRuns));
     }
+
+    // Check if there is a report.json from a recent test run
+    fetch('/report.json')
+      .then(response => {
+        if (response.ok) {
+          // Invalidate cache to get fresh data
+          const headers = new Headers();
+          headers.append('pragma', 'no-cache');
+          headers.append('cache-control', 'no-cache');
+          return fetch('/report.json', { headers }).then(res => res.json());
+        }
+        throw new Error('No new report file found.');
+      })
+      .then(data => {
+         processJsonReport(data);
+         // Optionally clear the report so it's not re-processed on next load
+      })
+      .catch(() => {
+        // This is expected if the file doesn't exist, so we do nothing.
+      });
+
   }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,46 +122,14 @@ export default function Home() {
       try {
         const text = e.target?.result as string;
         const json = JSON.parse(text);
-
-        // Basic validation to check if it looks like a playwright report
-        if (json.config && json.suites) {
-          const newRun: TestRun = {
-            runId: `run-${new Date().toISOString()}`,
-            executionDate: new Date().toISOString(),
-            tests: json.suites.flatMap((suite: any) => suite.specs).map((spec: any, index: number) => ({
-              id: spec.id || `test-${index}`,
-              name: spec.title,
-              description: spec.title,
-              duration: spec.tests[0]?.results[0]?.duration || 0,
-              status: spec.tests[0]?.status,
-              error: spec.tests[0]?.error?.message,
-              errorLog: spec.tests[0]?.error?.stack,
-              attachments: [],
-            }))
-          };
-          
-          setRuns(prevRuns => {
-            const updatedRuns = [newRun, ...prevRuns];
-            localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-            return updatedRuns;
-          });
-
-        } else if (Array.isArray(json) && json.every(item => 'runId' in item)) {
-          // It looks like an array of TestRun objects, likely from a previous export
-          setRuns(prevRuns => {
-            const newRuns = [...json, ...prevRuns];
-            // remove duplicates
-            const uniqueRuns = Array.from(new Map(newRuns.map(run => [run.runId, run])).values());
-            localStorage.setItem('testRuns', JSON.stringify(uniqueRuns));
-            return uniqueRuns;
-          });
-        }
-        else {
-          alert("Invalid file format. Please upload a Playwright JSON report.");
-        }
+        processJsonReport(json);
       } catch (error) {
         console.error("Error parsing JSON:", error);
-        alert("Error parsing JSON file. Make sure it is a valid JSON report.");
+        toast({
+          variant: "destructive",
+          title: "File Read Error",
+          description: "Could not parse the uploaded JSON file.",
+        });
       }
     };
     reader.readAsText(file);
@@ -165,7 +211,7 @@ export default function Home() {
                 <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-medium text-foreground">No test runs found</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Drag and drop a Playwright JSON report here, or click to upload.
+                  Run `npm run test:e2e` or drag and drop a report here.
                 </p>
               </div>
             ) : (
@@ -186,7 +232,7 @@ export default function Home() {
                   const summary = getTestRunSummary(run);
                   return (
                     <TableRow key={run.runId}>
-                      <TableCell className="font-medium">{run.runId}</TableCell>
+                      <TableCell className="font-medium">{run.runId.substring(0, 12)}...</TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground">
                         {new Date(run.executionDate).toLocaleString()}
                       </TableCell>
@@ -199,7 +245,7 @@ export default function Home() {
                       <TableCell>
                         <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
                           {summary.failed}
-                        </Badge>
+                        </badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
