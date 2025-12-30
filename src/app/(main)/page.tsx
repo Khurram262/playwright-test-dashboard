@@ -26,13 +26,15 @@ export default function Home() {
   const { toast } = useToast();
 
   const processJsonReport = (json: any) => {
-    // Basic validation to check if it looks like a playwright report
+    let processed = false;
+    // Standard Playwright report
     if (json.config && json.suites) {
+      processed = true;
       const newRun: TestRun = {
         runId: `run-${new Date().toISOString()}`,
         executionDate: new Date().toISOString(),
         tests: json.suites.flatMap((suite: any) => 
-          suite.specs.flatMap((spec: any) => 
+          suite.specs?.flatMap((spec: any) => 
             spec.tests.map((test: any, index: number) => ({
               id: spec.id || `${spec.title}-${index}`,
               name: spec.title,
@@ -43,7 +45,7 @@ export default function Home() {
               errorLog: test.results[0]?.error?.stack,
               attachments: [], // Attachments are not in the json report by default
             }))
-          )
+          ) || []
         )
       };
       
@@ -56,9 +58,11 @@ export default function Home() {
         title: "Report Loaded",
         description: `Successfully loaded ${newRun.tests.length} tests.`,
       })
-
-    } else if (Array.isArray(json) && json.every(item => 'runId' in item)) {
-      // It looks like an array of TestRun objects, likely from a previous export
+    } 
+    
+    // Previously exported runs file from this app
+    if (Array.isArray(json) && json.every(item => 'runId' in item && 'tests' in item)) {
+      processed = true;
       setRuns(prevRuns => {
         const newRuns = [...json, ...prevRuns];
         // remove duplicates
@@ -71,7 +75,8 @@ export default function Home() {
         description: `Successfully imported ${json.length} test runs.`,
       })
     }
-    else {
+    
+    if (!processed) {
       toast({
         variant: "destructive",
         title: "Invalid File Format",
@@ -84,7 +89,15 @@ export default function Home() {
     // Load runs from localStorage on initial render
     const savedRuns = localStorage.getItem('testRuns');
     if (savedRuns) {
-      setRuns(JSON.parse(savedRuns));
+      try {
+        const parsedRuns = JSON.parse(savedRuns);
+        if (Array.isArray(parsedRuns)) {
+          setRuns(parsedRuns);
+        }
+      } catch (e) {
+        console.error("Failed to parse test runs from localStorage", e);
+        localStorage.removeItem('testRuns');
+      }
     }
 
     // Check if there is a report.json from a recent test run
@@ -93,12 +106,13 @@ export default function Home() {
         if (response.ok) {
           return response.json();
         }
-        throw new Error('No new report file found.');
+        // Don't throw an error, just continue.
+        return null;
       })
       .then(data => {
-         processJsonReport(data);
-         // Once processed, we could rename or delete the file on the server
-         // but that's a more advanced setup. For now, it will be re-processed on reload.
+         if (data) {
+           processJsonReport(data);
+         }
       })
       .catch(() => {
         // This is expected if the file doesn't exist, so we do nothing.
@@ -161,6 +175,7 @@ export default function Home() {
   };
   
   const handleExport = () => {
+    if (runs.length === 0) return;
     const jsonString = JSON.stringify(runs, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -178,7 +193,7 @@ export default function Home() {
   };
 
 
-  const sortedRuns = runs.sort((a, b) => new Date(b.executionDate).getTime() - new Date(a.executionDate).getTime());
+  const sortedRuns = [...runs].sort((a, b) => new Date(b.executionDate).getTime() - new Date(a.executionDate).getTime());
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
@@ -293,3 +308,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
