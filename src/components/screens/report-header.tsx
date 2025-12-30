@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/screens/logo";
 import type { TestRun } from "@/types";
-import { ArrowLeft, FileJson2, Printer } from "lucide-react";
+import { ArrowLeft, FileJson2 } from "lucide-react";
 
 type ReportHeaderProps = {
   run: TestRun;
@@ -47,12 +46,6 @@ export function ReportHeader({ run }: ReportHeaderProps) {
             <Button variant="outline" onClick={handleJsonExport}>
               <FileJson2 className="mr-2 h-4 w-4" />
               Export JSON
-            </Button>
-            <Button asChild>
-              <Link href={`/run/${run.runId}/pdf`} target="_blank">
-                <Printer className="mr-2 h-4 w-4" />
-                Export PDF
-              </Link>
             </Button>
           </div>
         </div>
