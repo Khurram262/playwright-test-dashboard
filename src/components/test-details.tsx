@@ -25,11 +25,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { analyzeTestFailureLogs } from "@/ai/flows/analyze-test-failure-logs";
 import type { Test, TestRun, TestStatus } from "@/types";
-import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle, Filter, SortAsc, SortDesc } from "lucide-react";
+import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle, Filter, SortAsc, SortDesc, Search, ChevronsRightLeft, Copy, ChevronsUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -69,12 +70,26 @@ const AnalyzeLogButton = ({ errorLog }: { errorLog: string }) => {
     }
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(errorLog);
+    toast({
+        title: "Copied to Clipboard",
+        description: "The error log has been copied.",
+    })
+  }
+
   return (
     <>
-      <Button size="sm" onClick={handleAnalysis}>
-        <Sparkles className="mr-2 h-4 w-4" />
-        Analyze with AI
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button size="sm" onClick={handleAnalysis}>
+            <Sparkles className="mr-2 h-4 w-4" />
+            Analyze with AI
+        </Button>
+         <Button size="sm" variant="outline" onClick={handleCopy}>
+            <Copy className="mr-2 h-4 w-4" />
+            Copy Log
+        </Button>
+      </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
@@ -124,14 +139,20 @@ const getBadgeClasses = (status: TestStatus) => {
 }
 
 export function TestDetails({ run }: { run: TestRun }) {
-  const failedTests = run.tests.filter(t => t.status === 'failed').map(t => t.id);
-  const [openItems, setOpenItems] = React.useState<string[]>(failedTests);
+  const allTestIds = run.tests.map(t => t.id);
+  const failedTestIds = run.tests.filter(t => t.status === 'failed').map(t => t.id);
+
+  const [openItems, setOpenItems] = React.useState<string[]>(failedTestIds);
   const [filter, setFilter] = React.useState<TestStatus | "all">("all");
   const [sort, setSort] = React.useState<"default" | "duration-asc" | "duration-desc" | "name-asc" | "name-desc">("default");
-
+  const [searchTerm, setSearchTerm] = React.useState("");
 
   const filteredAndSortedTests = React.useMemo(() => {
     let tests = [...run.tests];
+
+    if (searchTerm) {
+        tests = tests.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
 
     if (filter !== "all") {
       tests = tests.filter(t => t.status === filter);
@@ -153,7 +174,10 @@ export function TestDetails({ run }: { run: TestRun }) {
     }
 
     return tests;
-  }, [run.tests, filter, sort]);
+  }, [run.tests, filter, sort, searchTerm]);
+
+  const handleExpandAll = () => setOpenItems(filteredAndSortedTests.map(t => t.id));
+  const handleCollapseAll = () => setOpenItems([]);
 
 
   return (
@@ -167,33 +191,52 @@ export function TestDetails({ run }: { run: TestRun }) {
                 </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-                 <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
-                    <SelectTrigger className="w-[180px]">
-                        <Filter className="mr-2 h-4 w-4" />
-                        <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="passed">Passed</SelectItem>
-                        <SelectItem value="failed">Failed</SelectItem>
-                        <SelectItem value="skipped">Skipped</SelectItem>
-                        <SelectItem value="interrupted">Interrupted</SelectItem>
-                    </SelectContent>
-                </Select>
-                 <Select value={sort} onValueChange={(value) => setSort(value as any)}>
-                    <SelectTrigger className="w-[180px]">
-                         {sort.endsWith('-asc') ? <SortAsc className="mr-2 h-4 w-4" /> : <SortDesc className="mr-2 h-4 w-4" />}
-                        <SelectValue placeholder="Sort tests" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="default">Default Order</SelectItem>
-                        <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                        <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                        <SelectItem value="duration-asc">Duration (Shortest First)</SelectItem>
-                        <SelectItem value="duration-desc">Duration (Longest First)</SelectItem>
-                    </SelectContent>
-                </Select>
+                 <Button variant="outline" size="sm" onClick={handleExpandAll} disabled={filteredAndSortedTests.length === 0}>
+                    <ChevronsUpDown className="mr-2 h-4 w-4" />
+                    Expand All
+                 </Button>
+                 <Button variant="outline" size="sm" onClick={handleCollapseAll} disabled={openItems.length === 0}>
+                    <ChevronsRightLeft className="mr-2 h-4 w-4" />
+                    Collapse All
+                 </Button>
             </div>
+        </div>
+        <div className="mt-4 flex flex-col sm:flex-row items-center gap-2">
+            <div className="relative w-full sm:w-auto sm:flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="Search tests by name..."
+                    className="pl-9"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+             <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                    <Filter className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="passed">Passed</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="skipped">Skipped</SelectItem>
+                    <SelectItem value="interrupted">Interrupted</SelectItem>
+                </SelectContent>
+            </Select>
+             <Select value={sort} onValueChange={(value) => setSort(value as any)}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                     {sort.endsWith('-asc') ? <SortAsc className="mr-2 h-4 w-4" /> : <SortDesc className="mr-2 h-4 w-4" />}
+                    <SelectValue placeholder="Sort tests" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="default">Default Order</SelectItem>
+                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                    <SelectItem value="duration-asc">Duration (Shortest First)</SelectItem>
+                    <SelectItem value="duration-desc">Duration (Longest First)</SelectItem>
+                </SelectContent>
+            </Select>
         </div>
       </CardHeader>
       <CardContent>
@@ -246,7 +289,7 @@ export function TestDetails({ run }: { run: TestRun }) {
                         <TabsContent value="analysis">
                             {(test.status === 'failed' || test.status === 'interrupted') && test.errorLog && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground mb-4">Get AI-powered suggestions for why this test might have failed.</p>
+                                    <p className="text-sm text-muted-foreground mb-4">Get AI-powered suggestions for why this test might have failed. You can also copy the raw log.</p>
                                     <AnalyzeLogButton errorLog={test.errorLog} />
                                 </div>
                             )}
@@ -274,10 +317,10 @@ export function TestDetails({ run }: { run: TestRun }) {
             </Accordion>
         ) : (
              <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-12 text-center">
-                <Filter className="mx-auto h-12 w-12 text-muted-foreground" />
+                <Search className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-6 text-xl font-semibold text-foreground">No matching tests found</h3>
                 <p className="mt-1 text-base text-muted-foreground">
-                    Adjust your filter or sort criteria to see more results.
+                    Try adjusting your search or filter criteria to see more results.
                 </p>
              </div>
         )}
@@ -285,3 +328,5 @@ export function TestDetails({ run }: { run: TestRun }) {
     </Card>
   );
 }
+
+    
