@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -14,11 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText } from "lucide-react";
 import type { TestRun, Test } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 
-// Utility function to get summary, moved from utils as it's only used here
 const getTestRunSummary = (run: TestRun) => {
   const summary = {
     passed: 0,
@@ -39,7 +38,6 @@ export default function Home() {
   const { toast } = useToast();
 
   const processJsonReport = (json: any) => {
-    // Check for previously exported runs from this app (an array of TestRun objects)
     if (Array.isArray(json) && json.length > 0 && json.every(item => 'runId' in item && 'tests' in item)) {
       setRuns(prevRuns => {
         const existingRunIds = new Set(prevRuns.map(run => run.runId));
@@ -65,7 +63,6 @@ export default function Home() {
       return;
     }
 
-    // Check for standard Playwright report format with less strictness
     if (json.config && Array.isArray(json.suites)) {
       let tests: Test[] = [];
 
@@ -77,8 +74,7 @@ export default function Home() {
             for (const spec of suite.specs) {
               if (spec.tests) {
                 for (const test of spec.tests) {
-                  // A single spec can have multiple tests (e.g. retries)
-                  const result = test.results?.[0]; // Get the first result
+                  const result = test.results?.[0];
                   extractedTests.push({
                     id: spec.id || `${spec.title}-${Date.now()}-${Math.random()}`,
                     name: spec.title || 'Unnamed Test',
@@ -87,13 +83,12 @@ export default function Home() {
                     status: test.status === 'timedOut' ? 'failed' : test.status,
                     error: result?.error?.message,
                     errorLog: result?.error?.stack,
-                    attachments: [], // Attachments are not in the json report by default
+                    attachments: [],
                   });
                 }
               }
             }
           }
-          // Recursively process nested suites
           if (suite.suites) {
             extractedTests = extractedTests.concat(extractTestsFromSuites(suite.suites));
           }
@@ -119,8 +114,6 @@ export default function Home() {
       };
 
       setRuns(prevRuns => {
-        // Prevent adding duplicate run if it was just auto-loaded
-        if (prevRuns.some(r => r.runId === newRun.runId)) return prevRuns;
         const updatedRuns = [newRun, ...prevRuns];
         localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
         return updatedRuns;
@@ -140,7 +133,6 @@ export default function Home() {
   }
   
   React.useEffect(() => {
-    // Load runs from localStorage on initial render
     const savedRuns = localStorage.getItem('testRuns');
     if (savedRuns) {
       try {
@@ -154,21 +146,13 @@ export default function Home() {
       }
     }
 
-    // Check if there is a report.json from a recent test run
     fetch('/report.json', { cache: "no-store" })
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        }
-        return null;
-      })
+      .then(response => response.ok ? response.json() : null)
       .then(data => {
-         if (data) {
-           processJsonReport(data);
-         }
+         if (data) processJsonReport(data);
       })
       .catch(() => {
-        console.log("No new report.json found in /public.");
+        console.log("No new report.json found.");
       });
 
   }, []);
@@ -219,38 +203,30 @@ export default function Home() {
   const sortedRuns = [...runs].sort((a, b) => new Date(b.executionDate).getTime() - new Date(a.executionDate).getTime());
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
-      <main className="max-w-7xl mx-auto">
-        <header className="flex items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <Logo className="h-10 w-10 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold font-headline text-foreground">
-                Playwright Report Exporter
-              </h1>
-              <p className="text-muted-foreground">
-                Dashboard for test execution results.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handlePaste}>
-              <Clipboard className="mr-2 h-4 w-4" />
-              Paste Report
-            </Button>
-            <Button onClick={handleExport} disabled={runs.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export Runs
-            </Button>
-          </div>
-        </header>
-
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Test Runs</h2>
-          {sortedRuns.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed rounded-lg bg-card">
-              <Clipboard className="mx-auto h-16 w-16 text-muted-foreground" />
-              <h3 className="mt-6 text-xl font-medium text-foreground">No test runs found</h3>
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-xl sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+        <div className="flex items-center gap-3">
+          <Logo className="h-8 w-8 text-primary" />
+          <h1 className="text-xl font-bold text-foreground">
+            Playwright Report Dashboard
+          </h1>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="outline" onClick={handlePaste}>
+            <Clipboard className="mr-2 h-4 w-4" />
+            Paste Report
+          </Button>
+          <Button onClick={handleExport} disabled={runs.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export Runs
+          </Button>
+        </div>
+      </header>
+      <main className="p-4 sm:p-6">
+        {sortedRuns.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed bg-card/50 p-12 text-center mt-8">
+              <FileText className="mx-auto h-16 w-16 text-muted-foreground" />
+              <h3 className="mt-6 text-2xl font-semibold text-foreground">No test runs found</h3>
               <p className="mt-2 text-base text-muted-foreground">
                 Copy a Playwright JSON report and click the &quot;Paste Report&quot; button.
               </p>
@@ -262,7 +238,7 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <Card className="shadow-lg">
+            <Card>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
@@ -287,17 +263,17 @@ export default function Home() {
                           </TableCell>
                           <TableCell>{summary.total}</TableCell>
                           <TableCell>
-                            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                             <Badge variant="outline" className="border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400">
                               {summary.passed}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                             <Badge variant="outline" className="border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-400">
                               {summary.failed}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                             <Badge variant="outline" className="border-yellow-500/50 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400">
                               {summary.skipped}
                             </Badge>
                           </TableCell>
@@ -316,7 +292,6 @@ export default function Home() {
               </CardContent>
             </Card>
           )}
-        </section>
       </main>
     </div>
   );

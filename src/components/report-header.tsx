@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/logo";
 import type { TestRun } from "@/types";
-import { ArrowLeft, FileJson2, Printer } from "lucide-react";
+import { ArrowLeft, FileJson, Printer } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 type ReportHeaderProps = {
   run: TestRun;
 };
 
 export function ReportHeader({ run }: ReportHeaderProps) {
+  const { toast } = useToast();
+  
   const handleJsonExport = () => {
     const jsonString = JSON.stringify(run, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
@@ -22,37 +24,45 @@ export function ReportHeader({ run }: ReportHeaderProps) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    toast({
+      title: "Run Exported",
+      description: `Successfully exported run ${run.runId}.`,
+    });
   };
 
+  const handlePrint = () => {
+    window.print();
+  }
+
   return (
-    <header className="bg-card border-b sticky top-0 z-10 no-print">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3">
-        <div className="flex items-center justify-between">
+    <header className="bg-card border-b sticky top-0 z-20 no-print">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2 text-primary hover:underline">
-              <ArrowLeft className="h-4 w-4"/>
-              All Runs
-            </Link>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/">
+                <ArrowLeft className="mr-2 h-4 w-4"/>
+                All Runs
+              </Link>
+            </Button>
             <span className="w-px h-6 bg-border" />
             <div>
-              <h1 className="text-lg font-semibold font-headline text-foreground">
-                Report: {run.runId}
+              <h1 className="text-lg font-semibold text-foreground">
+                Test Report
               </h1>
               <p className="text-sm text-muted-foreground">
-                {new Date(run.executionDate).toLocaleString()}
+                Run ID: {run.runId}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handleJsonExport}>
-              <FileJson2 className="mr-2 h-4 w-4" />
+            <Button variant="outline" size="sm" onClick={handleJsonExport}>
+              <FileJson className="mr-2 h-4 w-4" />
               Export JSON
             </Button>
-            <Button asChild>
-              <Link href={`/run/${run.runId}/pdf`} target="_blank">
-                <Printer className="mr-2 h-4 w-4" />
-                Export PDF
-              </Link>
+            <Button variant="default" size="sm" onClick={handlePrint}>
+              <Printer className="mr-2 h-4 w-4" />
+              Export PDF
             </Button>
           </div>
         </div>
