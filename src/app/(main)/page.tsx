@@ -28,25 +28,6 @@ export default function Home() {
   const processJsonReport = (json: any) => {
     let processed = false;
     
-    // Check for previously exported runs from this app
-    if (Array.isArray(json) && json.every(item => 'runId' in item && 'tests' in item)) {
-      processed = true;
-      setRuns(prevRuns => {
-        // Filter out any potential duplicates by runId
-        const existingRunIds = new Set(prevRuns.map(run => run.runId));
-        const newRuns = json.filter((run: TestRun) => !existingRunIds.has(run.runId));
-        
-        const updatedRuns = [...newRuns, ...prevRuns];
-        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-        return updatedRuns;
-      });
-      toast({
-        title: "Reports Imported",
-        description: `Successfully imported ${json.length} test runs.`,
-      })
-      return; // Exit early
-    }
-
     // Check for standard Playwright report
     if (json.config && json.suites) {
       processed = true;
@@ -70,7 +51,7 @@ export default function Home() {
       };
       
       // Avoid adding empty runs
-      if (newRun.tests.length === 0 && json.suites.length > 0) {
+      if (newRun.tests.length === 0) {
          toast({
             variant: "destructive",
             title: "Empty Report",
@@ -90,6 +71,34 @@ export default function Home() {
       })
       return; // Exit early
     } 
+
+    // Check for previously exported runs from this app
+    if (Array.isArray(json) && json.length > 0 && json.every(item => 'runId' in item && 'tests' in item)) {
+      processed = true;
+      setRuns(prevRuns => {
+        // Filter out any potential duplicates by runId
+        const existingRunIds = new Set(prevRuns.map(run => run.runId));
+        const newRuns = json.filter((run: TestRun) => !existingRunIds.has(run.runId));
+        
+        if (newRuns.length === 0) {
+           toast({
+            title: "No New Reports",
+            description: `All imported reports were already present.`,
+          })
+          return prevRuns;
+        }
+
+        const updatedRuns = [...newRuns, ...prevRuns];
+        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+        
+        toast({
+          title: "Reports Imported",
+          description: `Successfully imported ${newRuns.length} new test runs.`,
+        })
+        return updatedRuns;
+      });
+      return; // Exit early
+    }
     
     if (!processed) {
       toast({
