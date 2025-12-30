@@ -162,6 +162,14 @@ export default function Home() {
   };
   
   const processFile = (file: File) => {
+    if (file.type !== 'application/json') {
+      toast({
+        variant: "destructive",
+        title: "Invalid File Type",
+        description: "Please upload a valid JSON file.",
+      });
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -341,5 +349,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
