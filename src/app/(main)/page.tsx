@@ -26,36 +26,32 @@ export default function Home() {
   const { toast } = useToast();
 
   const processJsonReport = (json: any) => {
-    let processed = false;
-    
-    // Check for standard Playwright report
-    if (json.config && json.suites) {
-      processed = true;
+    // Check for standard Playwright report format
+    if (json.config && Array.isArray(json.suites)) {
       const newRun: TestRun = {
         runId: `run-${new Date().toISOString()}`,
         executionDate: new Date().toISOString(),
-        tests: json.suites.flatMap((suite: any) => 
-          suite.specs?.flatMap((spec: any) => 
-            spec.tests?.map((test: any, index: number) => ({
+        tests: json.suites.flatMap((suite: any) =>
+          (suite.specs || []).flatMap((spec: any) =>
+            (spec.tests || []).map((test: any, index: number) => ({
               id: spec.id || `${spec.title}-${index}`,
               name: spec.title,
               description: `Location: ${spec.file}:${spec.line}:${spec.column}`,
-              duration: test.results[0]?.duration || 0,
+              duration: test.results?.[0]?.duration || 0,
               status: test.status === 'timedOut' ? 'failed' : test.status,
-              error: test.results[0]?.error?.message,
-              errorLog: test.results[0]?.error?.stack,
+              error: test.results?.[0]?.error?.message,
+              errorLog: test.results?.[0]?.error?.stack,
               attachments: [], // Attachments are not in the json report by default
-            })) || []
-          ) || []
+            }))
+          )
         )
       };
       
-      // Avoid adding empty runs
       if (newRun.tests.length === 0) {
          toast({
             variant: "destructive",
             title: "Empty Report",
-            description: "The uploaded report contains suites but no tests were found.",
+            description: "The uploaded report file does not contain any tests.",
           });
           return;
       }
@@ -68,13 +64,12 @@ export default function Home() {
       toast({
         title: "Report Loaded",
         description: `Successfully loaded ${newRun.tests.length} tests.`,
-      })
-      return; // Exit early
+      });
+      return;
     } 
 
     // Check for previously exported runs from this app
     if (Array.isArray(json) && json.length > 0 && json.every(item => 'runId' in item && 'tests' in item)) {
-      processed = true;
       setRuns(prevRuns => {
         // Filter out any potential duplicates by runId
         const existingRunIds = new Set(prevRuns.map(run => run.runId));
@@ -84,7 +79,7 @@ export default function Home() {
            toast({
             title: "No New Reports",
             description: `All imported reports were already present.`,
-          })
+          });
           return prevRuns;
         }
 
@@ -94,19 +89,17 @@ export default function Home() {
         toast({
           title: "Reports Imported",
           description: `Successfully imported ${newRuns.length} new test runs.`,
-        })
+        });
         return updatedRuns;
       });
-      return; // Exit early
+      return;
     }
     
-    if (!processed) {
-      toast({
-        variant: "destructive",
-        title: "Invalid File Format",
-        description: "Please upload a Playwright JSON report or a previously exported runs file.",
-      })
-    }
+    toast({
+      variant: "destructive",
+      title: "Invalid File Format",
+      description: "Please upload a Playwright JSON report or a previously exported runs file.",
+    });
   }
   
   React.useEffect(() => {
@@ -130,7 +123,6 @@ export default function Home() {
         if (response.ok) {
           return response.json();
         }
-        // Don't throw an error, just continue.
         return null;
       })
       .then(data => {
@@ -139,7 +131,6 @@ export default function Home() {
          }
       })
       .catch(() => {
-        // This is expected if the file doesn't exist, so we do nothing.
         console.log("No new report.json found in /public. Upload one manually if needed.");
       });
 
