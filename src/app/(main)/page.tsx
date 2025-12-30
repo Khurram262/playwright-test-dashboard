@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTestRunSummary } from "@/lib/utils";
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Upload } from "lucide-react";
+import { ArrowRight, Download, Upload } from "lucide-react";
 import type { TestRun } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 
@@ -75,7 +75,7 @@ export default function Home() {
       toast({
         variant: "destructive",
         title: "Invalid File Format",
-        description: "Please upload a Playwright JSON report.",
+        description: "Please upload a Playwright JSON report or a previously exported runs file.",
       })
     }
   }
@@ -159,6 +159,24 @@ export default function Home() {
     event.stopPropagation();
     setIsDragging(false);
   };
+  
+  const handleExport = () => {
+    const jsonString = JSON.stringify(runs, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `test-runs-export-${new Date().toISOString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({
+      title: "Runs Exported",
+      description: `Successfully exported ${runs.length} test runs.`,
+    });
+  };
+
 
   const sortedRuns = runs.sort((a, b) => new Date(b.executionDate).getTime() - new Date(a.executionDate).getTime());
 
@@ -177,10 +195,16 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <Button onClick={() => fileInputRef.current?.click()}>
-            <Upload className="mr-2 h-4 w-4" />
-            Upload Report
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="mr-2 h-4 w-4" />
+              Import
+            </Button>
+            <Button onClick={handleExport} disabled={runs.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export Runs
+            </Button>
+          </div>
           <input
             type="file"
             ref={fileInputRef}
