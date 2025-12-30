@@ -11,10 +11,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard, FileText } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText, Trash2 } from "lucide-react";
 import type { TestRun, Test, TestStatus } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary } from "@/lib/utils";
@@ -38,6 +48,7 @@ const getStatusBadgeClasses = (status: TestStatus) => {
 
 export default function Home() {
   const [runs, setRuns] = React.useState<TestRun[]>([]);
+  const [isClearAlertOpen, setIsClearAlertOpen] = React.useState(false);
   const { toast } = useToast();
 
   const processJsonReport = React.useCallback((json: any) => {
@@ -177,8 +188,9 @@ export default function Home() {
       description: "Please paste a valid Playwright JSON report or a previously exported runs file.",
     });
   }, [toast]);
-  
+
   React.useEffect(() => {
+    // Load from localStorage on initial mount
     const savedRuns = localStorage.getItem('testRuns');
     if (savedRuns) {
       try {
@@ -192,15 +204,28 @@ export default function Home() {
       }
     }
 
+    // Auto-fetch latest report.json
     fetch('/report.json', { cache: "no-store" })
-      .then(response => response.ok ? response.json() : null)
+      .then(response => {
+        if (!response.ok) {
+            return null; // Don't throw for 404s etc.
+        }
+        // Check content-type to avoid parsing non-JSON responses
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            return response.json();
+        } else {
+            return null;
+        }
+      })
       .then(data => {
          if (data) {
            processJsonReport(data);
          }
       })
       .catch(() => {
-        console.log("No new report.json found.");
+        // Silently fail if fetching fails, as this is an optional enhancement
+        console.log("No new report.json found or failed to fetch.");
       });
   }, [processJsonReport]);
 
@@ -228,7 +253,7 @@ export default function Home() {
     a.href = url;
     a.download = `test-runs-export-${new Date().toISOString()}.json`;
     document.body.appendChild(a);
-a.click();
+    a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast({
@@ -237,11 +262,21 @@ a.click();
     });
   };
 
+  const handleClearAll = () => {
+    localStorage.removeItem('testRuns');
+    setRuns([]);
+    setIsClearAlertOpen(false);
+    toast({
+      title: "Data Cleared",
+      description: "All test run data has been cleared from your browser.",
+    });
+  };
+
   const sortedRuns = [...runs].sort((a, b) => new Date(b.executionDate).getTime() - new Date(a.executionDate).getTime());
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-xl sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-3">
           <Logo className="h-8 w-8 text-primary" />
           <h1 className="text-xl font-bold text-foreground">
@@ -256,6 +291,10 @@ a.click();
           <Button onClick={handleExport} disabled={runs.length === 0}>
             <Download className="mr-2 h-4 w-4" />
             Export Runs
+          </Button>
+          <Button variant="destructive" onClick={() => setIsClearAlertOpen(true)} disabled={runs.length === 0}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Clear Data
           </Button>
         </div>
       </header>
@@ -300,7 +339,7 @@ a.click();
                         const summary = getTestRunSummary(run);
                         return (
                           <TableRow key={run.runId}>
-                            <TableCell className="font-medium">{run.runId.substring(0, 12)}...</TableCell>
+                            <TableCell className="font-medium font-mono text-sm">{run.runId.substring(0, 15)}...</TableCell>
                             <TableCell className="hidden md:table-cell text-muted-foreground">
                               {new Date(run.executionDate).toLocaleString()}
                             </TableCell>
@@ -342,6 +381,23 @@ a.click();
             </>
           )}
       </main>
+      <AlertDialog open={isClearAlertOpen} onOpenChange={setIsClearAlertOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete all your
+                imported test run data from your browser's local storage.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAll}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
+    
