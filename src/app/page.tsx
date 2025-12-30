@@ -57,150 +57,150 @@ export default function Home() {
   const { toast } = useToast();
 
   const processJsonReport = (json: any) => {
-    // Check if it's the new format
-    if (Array.isArray(json) && json.length > 0 && 'startedAt' in json[0] && 'tests' in json[0]) {
-      const newRuns: TestRun[] = json.map((run: any) => {
-        const tests: Test[] = run.tests.map((test: any) => ({
-          id: `${test.file}-${test.line}-${run.id}`,
-          name: test.title,
-          description: `Location: ${test.file}:${test.line}`,
-          duration: test.duration,
-          status: test.status,
-          error: test.error,
-          errorLog: test.stack,
-          attachments: test.attachments.map((att: any) => ({
-            type: 'screenshot', // Assuming screenshot for now
-            path: att.path,
-            description: att.name,
-          }))
-        }));
-        return {
-          runId: run.id.toString(),
-          executionDate: run.startedAt,
-          tests: tests
-        }
-      });
-      
-      setRuns(prevRuns => {
-        const existingRunIds = new Set(prevRuns.map(run => run.runId));
-        const filteredNewRuns = newRuns.filter((run: TestRun) => !existingRunIds.has(run.runId));
-        
-        if (filteredNewRuns.length === 0) {
-           toast({
-            title: "No New Reports",
-            description: `All imported reports were already present.`,
-          });
-          return prevRuns;
-        }
-
-        const updatedRuns = [...filteredNewRuns, ...prevRuns];
-        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-        
-        toast({
-          title: "Reports Imported",
-          description: `Successfully imported ${filteredNewRuns.length} new test run(s).`,
+      // Check if it's the new format
+      if (Array.isArray(json) && json.length > 0 && 'startedAt' in json[0] && 'tests' in json[0]) {
+        const newRuns: TestRun[] = json.map((run: any) => {
+          const tests: Test[] = run.tests.map((test: any) => ({
+            id: `${test.file}-${test.line}-${run.id}`,
+            name: test.title,
+            description: `Location: ${test.file}:${test.line}`,
+            duration: test.duration,
+            status: test.status,
+            error: test.error,
+            errorLog: test.stack,
+            attachments: test.attachments?.map((att: any) => ({
+              type: 'screenshot', // Assuming screenshot for now
+              path: att.path,
+              description: att.name,
+            })) || []
+          }));
+          return {
+            runId: run.id.toString(),
+            executionDate: run.startedAt,
+            tests: tests
+          }
         });
-        return updatedRuns;
-      });
-      return;
-    }
-
-
-    // Check if it's an array of runs (exported format)
-    if (Array.isArray(json) && json.length > 0 && json.every(item => 'runId' in item && 'tests' in item)) {
-      setRuns(prevRuns => {
-        const existingRunIds = new Set(prevRuns.map(run => run.runId));
-        const newRuns = json.filter((run: TestRun) => !existingRunIds.has(run.runId));
         
-        if (newRuns.length === 0) {
-           toast({
-            title: "No New Reports",
-            description: `All imported reports were already present.`,
+        setRuns(prevRuns => {
+          const existingRunIds = new Set(prevRuns.map(run => run.runId));
+          const filteredNewRuns = newRuns.filter((run: TestRun) => !existingRunIds.has(run.runId));
+          
+          if (filteredNewRuns.length === 0) {
+             toast({
+              title: "No New Reports",
+              description: `All imported reports were already present.`,
+            });
+            return prevRuns;
+          }
+  
+          const updatedRuns = [...filteredNewRuns, ...prevRuns];
+          localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+          
+          toast({
+            title: "Reports Imported",
+            description: `Successfully imported ${filteredNewRuns.length} new test run(s).`,
           });
-          return prevRuns;
-        }
-
-        const updatedRuns = [...newRuns, ...prevRuns];
-        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-        
-        toast({
-          title: "Reports Imported",
-          description: `Successfully imported ${newRuns.length} new test run(s).`,
+          return updatedRuns;
         });
-        return updatedRuns;
-      });
-      return;
-    }
-
-    // Check if it's a standard Playwright report
-    if (json.config && Array.isArray(json.suites)) {
-      let tests: Test[] = [];
-
-      function extractTestsFromSuites(suites: any[]): Test[] {
-        let extractedTests: Test[] = [];
-        if (!suites) return extractedTests;
-        for (const suite of suites) {
-          if (suite.specs) {
-            for (const spec of suite.specs) {
-              if (spec.tests) {
-                for (const test of spec.tests) {
-                  const result = test.results?.[0];
-                  extractedTests.push({
-                    id: spec.id || `${spec.title}-${Date.now()}-${Math.random()}`,
-                    name: spec.title || 'Unnamed Test',
-                    description: `Location: ${spec.file || 'N/A'}:${spec.line || '0'}:${spec.column || '0'}`,
-                    duration: result?.duration || 0,
-                    status: test.status === 'timedOut' ? 'failed' : test.status,
-                    error: result?.error?.message,
-                    errorLog: result?.error?.stack,
-                    attachments: [],
-                  });
+        return;
+      }
+  
+  
+      // Check if it's an array of runs (exported format)
+      if (Array.isArray(json) && json.length > 0 && json.every(item => 'runId' in item && 'tests' in item)) {
+        setRuns(prevRuns => {
+          const existingRunIds = new Set(prevRuns.map(run => run.runId));
+          const newRuns = json.filter((run: TestRun) => !existingRunIds.has(run.runId));
+          
+          if (newRuns.length === 0) {
+             toast({
+              title: "No New Reports",
+              description: `All imported reports were already present.`,
+            });
+            return prevRuns;
+          }
+  
+          const updatedRuns = [...newRuns, ...prevRuns];
+          localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+          
+          toast({
+            title: "Reports Imported",
+            description: `Successfully imported ${newRuns.length} new test run(s).`,
+          });
+          return updatedRuns;
+        });
+        return;
+      }
+  
+      // Check if it's a standard Playwright report
+      if (json.config && Array.isArray(json.suites)) {
+        let tests: Test[] = [];
+  
+        function extractTestsFromSuites(suites: any[]): Test[] {
+          let extractedTests: Test[] = [];
+          if (!suites) return extractedTests;
+          for (const suite of suites) {
+            if (suite.specs) {
+              for (const spec of suite.specs) {
+                if (spec.tests) {
+                  for (const test of spec.tests) {
+                    const result = test.results?.[0];
+                    extractedTests.push({
+                      id: spec.id || `${spec.title}-${Date.now()}-${Math.random()}`,
+                      name: spec.title || 'Unnamed Test',
+                      description: `Location: ${spec.file || 'N/A'}:${spec.line || '0'}:${spec.column || '0'}`,
+                      duration: result?.duration || 0,
+                      status: test.status === 'timedOut' ? 'failed' : test.status,
+                      error: result?.error?.message,
+                      errorLog: result?.error?.stack,
+                      attachments: [],
+                    });
+                  }
                 }
               }
             }
+            if (suite.suites) {
+              extractedTests = extractedTests.concat(extractTestsFromSuites(suite.suites));
+            }
           }
-          if (suite.suites) {
-            extractedTests = extractedTests.concat(extractTestsFromSuites(suite.suites));
-          }
+          return extractedTests;
         }
-        return extractedTests;
+        
+        tests = extractTestsFromSuites(json.suites);
+  
+        if (tests.length === 0) {
+           toast({
+              variant: "destructive",
+              title: "Empty Report",
+              description: "The provided report does not contain any tests.",
+            });
+            return;
+        }
+        
+        const newRun: TestRun = {
+          runId: `run-${new Date().toISOString()}`,
+          executionDate: new Date().toISOString(),
+          tests: tests
+        };
+  
+        setRuns(prevRuns => {
+          const updatedRuns = [newRun, ...prevRuns];
+          localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+          return updatedRuns;
+        });
+        toast({
+          title: "Report Loaded",
+          description: `Successfully loaded ${newRun.tests.length} tests from the report.`,
+        });
+        return;
       }
       
-      tests = extractTestsFromSuites(json.suites);
-
-      if (tests.length === 0) {
-         toast({
-            variant: "destructive",
-            title: "Empty Report",
-            description: "The provided report does not contain any tests.",
-          });
-          return;
-      }
-      
-      const newRun: TestRun = {
-        runId: `run-${new Date().toISOString()}`,
-        executionDate: new Date().toISOString(),
-        tests: tests
-      };
-
-      setRuns(prevRuns => {
-        const updatedRuns = [newRun, ...prevRuns];
-        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-        return updatedRuns;
-      });
+      // If neither format matches
       toast({
-        title: "Report Loaded",
-        description: `Successfully loaded ${newRun.tests.length} tests from the report.`,
+        variant: "destructive",
+        title: "Invalid Format",
+        description: "Please paste a valid Playwright JSON report or a previously exported runs file.",
       });
-      return;
-    }
-    
-    // If neither format matches
-    toast({
-      variant: "destructive",
-      title: "Invalid Format",
-      description: "Please paste a valid Playwright JSON report or a previously exported runs file.",
-    });
   }
   
   React.useEffect(() => {
@@ -220,21 +220,35 @@ export default function Home() {
 
     // Check if there is a report.json from a recent test run
     fetch('/report.json', { cache: "no-store" })
-      .then(response => response.ok ? response.json() : null)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        return null;
+      })
       .then(data => {
-         if (data) processJsonReport(data);
+         if (data) {
+           processJsonReport(data);
+         }
       })
       .catch(() => {
         // This is expected if the file doesn't exist, so we do nothing.
         console.log("No new report.json found.");
       });
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
+      if (!text) {
+        toast({
+          variant: "destructive",
+          title: "Clipboard Empty",
+          description: "Your clipboard is empty. Please copy a valid JSON report.",
+        });
+        return;
+      }
       const json = JSON.parse(text);
       processJsonReport(json);
     } catch (error) {
