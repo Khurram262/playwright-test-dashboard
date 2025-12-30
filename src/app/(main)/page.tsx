@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { getTestRunSummary } from "@/lib/utils";
 import { Logo } from "@/components/screens/logo";
 import { ArrowRight, Download, Upload } from "lucide-react";
-import type { TestRun } from '@/types';
+import type { TestRun, Test } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
@@ -26,48 +26,6 @@ export default function Home() {
   const { toast } = useToast();
 
   const processJsonReport = (json: any) => {
-    // Check for standard Playwright report format
-    if (json.config && Array.isArray(json.suites)) {
-      const newRun: TestRun = {
-        runId: `run-${new Date().toISOString()}`,
-        executionDate: new Date().toISOString(),
-        tests: json.suites.flatMap((suite: any) =>
-          (suite.specs || []).flatMap((spec: any) =>
-            (spec.tests || []).map((test: any, index: number) => ({
-              id: spec.id || `${spec.title}-${index}`,
-              name: spec.title,
-              description: `Location: ${spec.file}:${spec.line}:${spec.column}`,
-              duration: test.results?.[0]?.duration || 0,
-              status: test.status === 'timedOut' ? 'failed' : test.status,
-              error: test.results?.[0]?.error?.message,
-              errorLog: test.results?.[0]?.error?.stack,
-              attachments: [], // Attachments are not in the json report by default
-            }))
-          )
-        )
-      };
-      
-      if (newRun.tests.length === 0) {
-         toast({
-            variant: "destructive",
-            title: "Empty Report",
-            description: "The uploaded report file does not contain any tests.",
-          });
-          return;
-      }
-
-      setRuns(prevRuns => {
-        const updatedRuns = [newRun, ...prevRuns];
-        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-        return updatedRuns;
-      });
-      toast({
-        title: "Report Loaded",
-        description: `Successfully loaded ${newRun.tests.length} tests.`,
-      });
-      return;
-    } 
-
     // Check for previously exported runs from this app
     if (Array.isArray(json) && json.length > 0 && json.every(item => 'runId' in item && 'tests' in item)) {
       setRuns(prevRuns => {
@@ -91,6 +49,66 @@ export default function Home() {
           description: `Successfully imported ${newRuns.length} new test runs.`,
         });
         return updatedRuns;
+      });
+      return;
+    }
+
+    // Check for standard Playwright report format with less strictness
+    if (json.config && json.suites) {
+      let tests: Test[] = [];
+      const suites = Array.isArray(json.suites) ? json.suites : [];
+
+      function extractTests(suites: any[]) {
+          for (const suite of suites) {
+              if (suite.specs) {
+                  for (const spec of suite.specs) {
+                      if (spec.tests) {
+                          for (const test of spec.tests) {
+                              tests.push({
+                                id: spec.id || `${spec.title}-${tests.length}`,
+                                name: spec.title || 'Unnamed Test',
+                                description: `Location: ${spec.file || 'N/A'}:${spec.line || '0'}:${spec.column || '0'}`,
+                                duration: test.results?.[0]?.duration || 0,
+                                status: test.status === 'timedOut' ? 'failed' : test.status,
+                                error: test.results?.[0]?.error?.message,
+                                errorLog: test.results?.[0]?.error?.stack,
+                                attachments: [], // Attachments are not in the json report by default
+                              });
+                          }
+                      }
+                  }
+              }
+              if (suite.suites) { // Recursively process nested suites
+                  extractTests(suite.suites);
+              }
+          }
+      }
+      
+      extractTests(suites);
+
+      if (tests.length === 0) {
+         toast({
+            variant: "destructive",
+            title: "Empty Report",
+            description: "The uploaded report file does not contain any tests.",
+          });
+          return;
+      }
+      
+      const newRun: TestRun = {
+        runId: `run-${new Date().toISOString()}`,
+        executionDate: new Date().toISOString(),
+        tests: tests
+      };
+
+      setRuns(prevRuns => {
+        const updatedRuns = [newRun, ...prevRuns];
+        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+        return updatedRuns;
+      });
+      toast({
+        title: "Report Loaded",
+        description: `Successfully loaded ${newRun.tests.length} tests.`,
       });
       return;
     }
@@ -323,3 +341,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
