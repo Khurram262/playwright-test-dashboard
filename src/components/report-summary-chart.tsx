@@ -40,7 +40,7 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="flex items-center justify-center lg:col-span-1">
+          <div className="flex flex-col items-center justify-center lg:col-span-1">
             <ChartContainer config={chartConfig} className="min-h-[180px] w-full max-w-[250px]">
               <PieChart>
                 <ChartTooltip
@@ -52,6 +52,7 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                 </Pie>
+                <ChartLegend content={<ChartLegendContent />} />
               </PieChart>
             </ChartContainer>
           </div>
@@ -106,9 +107,6 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
           </div>
         </div>
       </CardContent>
-      <CardFooter className="justify-center">
-         <ChartLegend content={<ChartLegendContent />} />
-      </CardFooter>
     </Card>
   );
 }
