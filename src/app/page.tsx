@@ -17,24 +17,8 @@ import { Logo } from "@/components/screens/logo";
 import { ArrowRight, Download, Clipboard, FileText } from "lucide-react";
 import type { TestRun, Test, TestStatus } from '@/types';
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-
-const getTestRunSummary = (run: TestRun) => {
-  const summary = {
-    passed: 0,
-    failed: 0,
-    skipped: 0,
-    interrupted: 0,
-    total: run.tests.length,
-  };
-  for (const test of run.tests) {
-    if (test.status === "passed") summary.passed++;
-    else if (test.status === "failed") summary.failed++;
-    else if (test.status === "skipped") summary.skipped++;
-    else if (test.status === "interrupted") summary.interrupted++;
-  }
-  return summary;
-};
+import { cn, getTestRunSummary } from "@/lib/utils";
+import { OverallSummary } from "@/components/overall-summary";
 
 const getStatusBadgeClasses = (status: TestStatus) => {
   switch (status) {
@@ -56,7 +40,7 @@ export default function Home() {
   const [runs, setRuns] = React.useState<TestRun[]>([]);
   const { toast } = useToast();
 
-  const processJsonReport = (json: any) => {
+  const processJsonReport = React.useCallback((json: any) => {
     // New format check (array of runs with `startedAt` and `tests`)
     if (Array.isArray(json) && json.length > 0 && 'startedAt' in json[0] && 'tests' in json[0]) {
       const newRuns: TestRun[] = json.map((run: any) => ({
@@ -178,11 +162,11 @@ export default function Home() {
         setRuns(prevRuns => {
           const updatedRuns = [newRun, ...prevRuns];
           localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+          toast({
+            title: "Report Loaded",
+            description: `Successfully loaded ${newRun.tests.length} tests from the report.`,
+          });
           return updatedRuns;
-        });
-        toast({
-          title: "Report Loaded",
-          description: `Successfully loaded ${newRun.tests.length} tests from the report.`,
         });
         return;
       }
@@ -192,7 +176,7 @@ export default function Home() {
       title: "Invalid Format",
       description: "Please paste a valid Playwright JSON report or a previously exported runs file.",
     });
-  };
+  }, [toast]);
   
   React.useEffect(() => {
     const savedRuns = localStorage.getItem('testRuns');
@@ -218,19 +202,11 @@ export default function Home() {
       .catch(() => {
         console.log("No new report.json found.");
       });
-  }, []);
+  }, [processJsonReport]);
 
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      if (!text) {
-        toast({
-          variant: "destructive",
-          title: "Clipboard Empty",
-          description: "Your clipboard is empty. Please copy a valid JSON report.",
-        });
-        return;
-      }
       const json = JSON.parse(text);
       processJsonReport(json);
     } catch (error) {
@@ -238,7 +214,7 @@ export default function Home() {
       toast({
         variant: "destructive",
         title: "Invalid Content",
-        description: "Pasted content is not a valid JSON report. Please copy the correct data.",
+        description: "Pasted content is not valid JSON or clipboard is empty. Please copy a valid report.",
       });
     }
   };
@@ -252,7 +228,7 @@ export default function Home() {
     a.href = url;
     a.download = `test-runs-export-${new Date().toISOString()}.json`;
     document.body.appendChild(a);
-    a.click();
+a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast({
@@ -283,7 +259,7 @@ export default function Home() {
           </Button>
         </div>
       </header>
-      <main className="p-4 sm:p-6">
+      <main className="p-4 sm:p-6 space-y-6">
         {sortedRuns.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-12 text-center mt-8">
               <FileText className="mx-auto h-16 w-16 text-muted-foreground" />
@@ -299,65 +275,71 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Run ID</TableHead>
-                      <TableHead className="hidden md:table-cell">Execution Date</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Passed</TableHead>
-                      <TableHead>Failed</TableHead>
-                      <TableHead>Skipped</TableHead>
-                      <TableHead>Interrupted</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedRuns.map((run) => {
-                      const summary = getTestRunSummary(run);
-                      return (
-                        <TableRow key={run.runId}>
-                          <TableCell className="font-medium">{run.runId.substring(0, 12)}...</TableCell>
-                          <TableCell className="hidden md:table-cell text-muted-foreground">
-                            {new Date(run.executionDate).toLocaleString()}
-                          </TableCell>
-                          <TableCell>{summary.total}</TableCell>
-                          <TableCell>
-                             <Badge variant="outline" className={getStatusBadgeClasses('passed')}>
-                              {summary.passed}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                             <Badge variant="outline" className={getStatusBadgeClasses('failed')}>
-                              {summary.failed}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                             <Badge variant="outline" className={getStatusBadgeClasses('skipped')}>
-                              {summary.skipped}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                             <Badge variant="outline" className={getStatusBadgeClasses('interrupted')}>
-                              {summary.interrupted}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button asChild variant="ghost" size="sm">
-                              <Link href={`/run/${run.runId}`}>
-                                View Report <ArrowRight className="ml-2 h-4 w-4" />
-                              </Link>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <>
+              <OverallSummary runs={sortedRuns} />
+              <Card>
+                <CardHeader>
+                  <CardTitle>All Test Runs</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Run ID</TableHead>
+                        <TableHead className="hidden md:table-cell">Execution Date</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Passed</TableHead>
+                        <TableHead>Failed</TableHead>
+                        <TableHead>Skipped</TableHead>
+                        <TableHead>Interrupted</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedRuns.map((run) => {
+                        const summary = getTestRunSummary(run);
+                        return (
+                          <TableRow key={run.runId}>
+                            <TableCell className="font-medium">{run.runId.substring(0, 12)}...</TableCell>
+                            <TableCell className="hidden md:table-cell text-muted-foreground">
+                              {new Date(run.executionDate).toLocaleString()}
+                            </TableCell>
+                            <TableCell>{summary.total}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn(getStatusBadgeClasses('passed'), summary.passed > 0 && 'font-semibold')}>
+                                {summary.passed}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn(getStatusBadgeClasses('failed'), summary.failed > 0 && 'font-semibold')}>
+                                {summary.failed}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn(getStatusBadgeClasses('skipped'), summary.skipped > 0 && 'font-semibold')}>
+                                {summary.skipped}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn(getStatusBadgeClasses('interrupted'), summary.interrupted > 0 && 'font-semibold')}>
+                                {summary.interrupted}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button asChild variant="ghost" size="sm">
+                                <Link href={`/run/${run.runId}`}>
+                                  View Report <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </>
           )}
       </main>
     </div>
