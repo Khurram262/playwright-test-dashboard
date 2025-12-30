@@ -78,7 +78,7 @@ export function OverallSummary({ runs }: OverallSummaryProps) {
   const pieChartData = [
     { name: 'Passed', value: overallSummary.passed, fill: PIE_COLORS.passed },
     { name: 'Failed', value: overallSummary.failed, fill: PIE_COLORS.failed },
-    { name: 'Skipped', value: overallSummary.skipped, fill: PIECOLORS.skipped },
+    { name: 'Skipped', value: overallSummary.skipped, fill: PIE_COLORS.skipped },
     { name: 'Interrupted', value: overallSummary.interrupted, fill: PIE_COLORS.interrupted },
   ].filter(d => d.value > 0);
 
