@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Upload } from "lucide-react";
+import { ArrowRight, Download, Clipboard } from "lucide-react";
 import type { TestRun, Test } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,7 +36,6 @@ const getTestRunSummary = (run: TestRun) => {
 
 export default function Home() {
   const [runs, setRuns] = React.useState<TestRun[]>([]);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const processJsonReport = (json: any) => {
@@ -108,7 +107,7 @@ export default function Home() {
          toast({
             variant: "destructive",
             title: "Empty Report",
-            description: "The uploaded report file does not contain any tests.",
+            description: "The provided report does not contain any tests.",
           });
           return;
       }
@@ -135,8 +134,8 @@ export default function Home() {
     
     toast({
       variant: "destructive",
-      title: "Invalid File Format",
-      description: "Please upload a valid Playwright JSON report or a previously exported runs file.",
+      title: "Invalid Format",
+      description: "Please paste a valid Playwright JSON report or a previously exported runs file.",
     });
   }
   
@@ -169,48 +168,34 @@ export default function Home() {
          }
       })
       .catch(() => {
-        console.log("No new report.json found in /public. Upload one manually if needed.");
+        console.log("No new report.json found in /public.");
       });
 
   }, []);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      processFile(file);
-    }
-  };
-  
-  const processFile = (file: File) => {
-    if (file.type !== 'application/json') {
-      toast({
-        variant: "destructive",
-        title: "Invalid File Type",
-        description: "Please upload a valid JSON file.",
-      });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const text = e.target?.result as string;
-        const json = JSON.parse(text);
-        processJsonReport(json);
-      } catch (error) {
-        console.error("Error parsing JSON:", error);
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) {
         toast({
           variant: "destructive",
-          title: "File Read Error",
-          description: "Could not parse the uploaded JSON file.",
+          title: "Clipboard Empty",
+          description: "Your clipboard is empty. Please copy the report JSON first.",
         });
+        return;
       }
-    };
-    reader.readAsText(file);
-    // Reset file input to allow re-uploading the same file
-    if(fileInputRef.current) {
-        fileInputRef.current.value = "";
+      const json = JSON.parse(text);
+      processJsonReport(json);
+    } catch (error) {
+      console.error("Error pasting or parsing JSON:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+      toast({
+        variant: "destructive",
+        title: "Paste Error",
+        description: `Could not process clipboard content. Make sure it's valid JSON. Error: ${errorMessage}`,
+      });
     }
-  }
+  };
 
   const handleExport = () => {
     if (runs.length === 0) return;
@@ -249,22 +234,15 @@ a.click();
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="mr-2 h-4 w-4" />
-              Import
+            <Button variant="outline" onClick={handlePaste}>
+              <Clipboard className="mr-2 h-4 w-4" />
+              Paste Report
             </Button>
             <Button onClick={handleExport} disabled={runs.length === 0}>
               <Download className="mr-2 h-4 w-4" />
               Export Runs
             </Button>
           </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            accept="application/json"
-          />
         </header>
 
         <Card className="shadow-lg">
@@ -274,13 +252,12 @@ a.click();
           <CardContent>
              {sortedRuns.length === 0 ? (
               <div 
-                className="text-center py-12 border-2 border-dashed rounded-lg cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
+                className="text-center py-12 border-2 border-dashed rounded-lg"
               >
-                <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                <Clipboard className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-medium text-foreground">No test runs found</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Click to import a report file.
+                  Click the &quot;Paste Report&quot; button to get started.
                 </p>
               </div>
             ) : (
