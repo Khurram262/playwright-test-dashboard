@@ -37,7 +37,6 @@ const getTestRunSummary = (run: TestRun) => {
 export default function Home() {
   const [runs, setRuns] = React.useState<TestRun[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = React.useState(false);
   const { toast } = useToast();
 
   const processJsonReport = (json: any) => {
@@ -68,37 +67,42 @@ export default function Home() {
     }
 
     // Check for standard Playwright report format with less strictness
-    if (json.config && json.suites) {
+    if (json.config && Array.isArray(json.suites)) {
       let tests: Test[] = [];
-      const suites = Array.isArray(json.suites) ? json.suites : [];
 
-      function extractTests(suites: any[]) {
-          for (const suite of suites) {
-              if (suite.specs) {
-                  for (const spec of suite.specs) {
-                      if (spec.tests) {
-                          for (const test of spec.tests) {
-                              tests.push({
-                                id: spec.id || `${spec.title}-${tests.length}`,
-                                name: spec.title || 'Unnamed Test',
-                                description: `Location: ${spec.file || 'N/A'}:${spec.line || '0'}:${spec.column || '0'}`,
-                                duration: test.results?.[0]?.duration || 0,
-                                status: test.status === 'timedOut' ? 'failed' : test.status,
-                                error: test.results?.[0]?.error?.message,
-                                errorLog: test.results?.[0]?.error?.stack,
-                                attachments: [], // Attachments are not in the json report by default
-                              });
-                          }
-                      }
-                  }
+      function extractTestsFromSuites(suites: any[]): Test[] {
+        let extractedTests: Test[] = [];
+        if (!suites) return extractedTests;
+        for (const suite of suites) {
+          if (suite.specs) {
+            for (const spec of suite.specs) {
+              if (spec.tests) {
+                for (const test of spec.tests) {
+                  // A single spec can have multiple tests (e.g. retries)
+                  const result = test.results?.[0]; // Get the first result
+                  extractedTests.push({
+                    id: spec.id || `${spec.title}-${Date.now()}-${Math.random()}`,
+                    name: spec.title || 'Unnamed Test',
+                    description: `Location: ${spec.file || 'N/A'}:${spec.line || '0'}:${spec.column || '0'}`,
+                    duration: result?.duration || 0,
+                    status: test.status === 'timedOut' ? 'failed' : test.status,
+                    error: result?.error?.message,
+                    errorLog: result?.error?.stack,
+                    attachments: [], // Attachments are not in the json report by default
+                  });
+                }
               }
-              if (suite.suites) { // Recursively process nested suites
-                  extractTests(suite.suites);
-              }
+            }
           }
+          // Recursively process nested suites
+          if (suite.suites) {
+            extractedTests = extractedTests.concat(extractTestsFromSuites(suite.suites));
+          }
+        }
+        return extractedTests;
       }
       
-      extractTests(suites);
+      tests = extractTestsFromSuites(json.suites);
 
       if (tests.length === 0) {
          toast({
@@ -124,7 +128,7 @@ export default function Home() {
       });
       toast({
         title: "Report Loaded",
-        description: `Successfully loaded ${newRun.tests.length} tests.`,
+        description: `Successfully loaded ${newRun.tests.length} tests from the report.`,
       });
       return;
     }
@@ -132,7 +136,7 @@ export default function Home() {
     toast({
       variant: "destructive",
       title: "Invalid File Format",
-      description: "Please upload a Playwright JSON report or a previously exported runs file.",
+      description: "Please upload a valid Playwright JSON report or a previously exported runs file.",
     });
   }
   
@@ -202,35 +206,12 @@ export default function Home() {
       }
     };
     reader.readAsText(file);
+    // Reset file input to allow re-uploading the same file
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
   }
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragging(false);
-    if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
-      processFile(event.dataTransfer.files[0]);
-      event.dataTransfer.clearData();
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-  
-  const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragging(true);
-  };
-  
-  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragging(false);
-  };
-  
   const handleExport = () => {
     if (runs.length === 0) return;
     const jsonString = JSON.stringify(runs, null, 2);
@@ -240,7 +221,7 @@ export default function Home() {
     a.href = url;
     a.download = `test-runs-export-${new Date().toISOString()}.json`;
     document.body.appendChild(a);
-    a.click();
+a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast({
@@ -286,13 +267,7 @@ export default function Home() {
           />
         </header>
 
-        <Card 
-          className={`shadow-lg transition-all ${isDragging ? 'border-primary' : ''}`}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-        >
+        <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Test Runs</CardTitle>
           </CardHeader>
@@ -305,7 +280,7 @@ export default function Home() {
                 <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-medium text-foreground">No test runs found</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Run `npm run test:e2e` or drag and drop a report here.
+                  Click to import a report file.
                 </p>
               </div>
             ) : (
@@ -365,5 +340,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
