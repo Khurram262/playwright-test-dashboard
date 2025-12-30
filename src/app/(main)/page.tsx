@@ -13,11 +13,26 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getTestRunSummary } from "@/lib/utils";
 import { Logo } from "@/components/screens/logo";
 import { ArrowRight, Download, Upload } from "lucide-react";
 import type { TestRun, Test } from '@/types';
 import { useToast } from "@/hooks/use-toast";
+
+// Utility function to get summary, moved from utils as it's only used here
+const getTestRunSummary = (run: TestRun) => {
+  const summary = {
+    passed: 0,
+    failed: 0,
+    skipped: 0,
+    total: run.tests.length,
+  };
+  for (const test of run.tests) {
+    if (test.status === "passed") summary.passed++;
+    else if (test.status === "failed") summary.failed++;
+    else if (test.status === "skipped") summary.skipped++;
+  }
+  return summary;
+};
 
 export default function Home() {
   const [runs, setRuns] = React.useState<TestRun[]>([]);
@@ -26,10 +41,9 @@ export default function Home() {
   const { toast } = useToast();
 
   const processJsonReport = (json: any) => {
-    // Check for previously exported runs from this app
+    // Check for previously exported runs from this app (an array of TestRun objects)
     if (Array.isArray(json) && json.length > 0 && json.every(item => 'runId' in item && 'tests' in item)) {
       setRuns(prevRuns => {
-        // Filter out any potential duplicates by runId
         const existingRunIds = new Set(prevRuns.map(run => run.runId));
         const newRuns = json.filter((run: TestRun) => !existingRunIds.has(run.runId));
         
@@ -46,7 +60,7 @@ export default function Home() {
         
         toast({
           title: "Reports Imported",
-          description: `Successfully imported ${newRuns.length} new test runs.`,
+          description: `Successfully imported ${newRuns.length} new test run(s).`,
         });
         return updatedRuns;
       });
@@ -102,6 +116,8 @@ export default function Home() {
       };
 
       setRuns(prevRuns => {
+        // Prevent adding duplicate run if it was just auto-loaded
+        if (prevRuns.some(r => r.runId === newRun.runId)) return prevRuns;
         const updatedRuns = [newRun, ...prevRuns];
         localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
         return updatedRuns;
@@ -349,3 +365,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
