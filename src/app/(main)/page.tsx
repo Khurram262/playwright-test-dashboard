@@ -27,7 +27,27 @@ export default function Home() {
 
   const processJsonReport = (json: any) => {
     let processed = false;
-    // Standard Playwright report
+    
+    // Check for previously exported runs from this app
+    if (Array.isArray(json) && json.every(item => 'runId' in item && 'tests' in item)) {
+      processed = true;
+      setRuns(prevRuns => {
+        // Filter out any potential duplicates by runId
+        const existingRunIds = new Set(prevRuns.map(run => run.runId));
+        const newRuns = json.filter((run: TestRun) => !existingRunIds.has(run.runId));
+        
+        const updatedRuns = [...newRuns, ...prevRuns];
+        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+        return updatedRuns;
+      });
+      toast({
+        title: "Reports Imported",
+        description: `Successfully imported ${json.length} test runs.`,
+      })
+      return; // Exit early
+    }
+
+    // Check for standard Playwright report
     if (json.config && json.suites) {
       processed = true;
       const newRun: TestRun = {
@@ -35,7 +55,7 @@ export default function Home() {
         executionDate: new Date().toISOString(),
         tests: json.suites.flatMap((suite: any) => 
           suite.specs?.flatMap((spec: any) => 
-            spec.tests.map((test: any, index: number) => ({
+            spec.tests?.map((test: any, index: number) => ({
               id: spec.id || `${spec.title}-${index}`,
               name: spec.title,
               description: `Location: ${spec.file}:${spec.line}:${spec.column}`,
@@ -44,11 +64,21 @@ export default function Home() {
               error: test.results[0]?.error?.message,
               errorLog: test.results[0]?.error?.stack,
               attachments: [], // Attachments are not in the json report by default
-            }))
+            })) || []
           ) || []
         )
       };
       
+      // Avoid adding empty runs
+      if (newRun.tests.length === 0 && json.suites.length > 0) {
+         toast({
+            variant: "destructive",
+            title: "Empty Report",
+            description: "The uploaded report contains suites but no tests were found.",
+          });
+          return;
+      }
+
       setRuns(prevRuns => {
         const updatedRuns = [newRun, ...prevRuns];
         localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
@@ -58,23 +88,8 @@ export default function Home() {
         title: "Report Loaded",
         description: `Successfully loaded ${newRun.tests.length} tests.`,
       })
+      return; // Exit early
     } 
-    
-    // Previously exported runs file from this app
-    if (Array.isArray(json) && json.every(item => 'runId' in item && 'tests' in item)) {
-      processed = true;
-      setRuns(prevRuns => {
-        const newRuns = [...json, ...prevRuns];
-        // remove duplicates
-        const uniqueRuns = Array.from(new Map(newRuns.map(run => [run.runId, run])).values());
-        localStorage.setItem('testRuns', JSON.stringify(uniqueRuns));
-        return uniqueRuns;
-      });
-       toast({
-        title: "Reports Imported",
-        description: `Successfully imported ${json.length} test runs.`,
-      })
-    }
     
     if (!processed) {
       toast({
@@ -308,5 +323,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
