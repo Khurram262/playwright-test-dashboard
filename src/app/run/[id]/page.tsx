@@ -6,32 +6,51 @@ import type { TestRun } from '@/types';
 import { ReportHeader } from '@/components/report-header';
 import { ReportSummaryChart } from '@/components/report-summary-chart';
 import { TestDetails } from '@/components/test-details';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ReportPage() {
   const [run, setRun] = React.useState<TestRun | null>(null);
+  const [loading, setLoading] = React.useState(true);
   const pathname = usePathname();
 
   React.useEffect(() => {
     if (pathname) {
       const runId = pathname.split('/')[2];
-      const savedRuns = localStorage.getItem('testRuns');
-      if (savedRuns) {
-        const allRuns: TestRun[] = JSON.parse(savedRuns);
-        const currentRun = allRuns.find(r => r.runId === runId);
-        setRun(currentRun || null);
+      try {
+        const savedRuns = localStorage.getItem('testRuns');
+        if (savedRuns) {
+          const allRuns: TestRun[] = JSON.parse(savedRuns);
+          const currentRun = allRuns.find(r => r.runId === runId);
+          setRun(currentRun || null);
+        }
+      } catch (e) {
+        console.error("Failed to load or parse test runs:", e);
+        setRun(null);
+      } finally {
+        setLoading(false);
       }
     }
   }, [pathname]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        <Skeleton className="h-14 w-full" />
+        <Skeleton className="h-96 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   if (!run) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center p-8">
-          <h1 className="text-xl font-semibold text-foreground">
-            Loading Report...
+          <h1 className="text-2xl font-bold text-destructive">
+            Report Not Found
           </h1>
-          <p className="text-muted-foreground">
-            If the report does not load, it may not be available.
+          <p className="text-muted-foreground mt-2">
+            The test run you are looking for could not be found. It might have been deleted or the ID is incorrect.
           </p>
         </div>
       </div>

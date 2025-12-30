@@ -8,7 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,18 +18,27 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { analyzeTestFailureLogs } from "@/ai/flows/analyze-test-failure-logs";
 import type { Test, TestRun, TestStatus } from "@/types";
-import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle } from "lucide-react";
+import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle, Filter, SortAsc, SortDesc } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-const StatusIcon = ({ status }: { status: Test['status'] }) => {
-  if (status === 'passed') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-  if (status === 'failed') return <XCircle className="h-5 w-5 text-red-500" />;
-  if (status === 'skipped') return <MinusCircle className="h-5 w-5 text-yellow-500" />;
-  if (status === 'interrupted') return <AlertCircle className="h-5 w-5 text-gray-500" />;
+const StatusIcon = ({ status, className }: { status: Test['status'], className?: string }) => {
+  const props = { className: cn("h-5 w-5", className) };
+  if (status === 'passed') return <CheckCircle2 {...props} className={cn(props.className, "text-green-500")} />;
+  if (status === 'failed') return <XCircle {...props} className={cn(props.className, "text-red-500")} />;
+  if (status === 'skipped') return <MinusCircle {...props} className={cn(props.className, "text-yellow-500")} />;
+  if (status === 'interrupted') return <AlertCircle {...props} className={cn(props.className, "text-gray-500")} />;
   return null;
 };
 
@@ -62,7 +71,7 @@ const AnalyzeLogButton = ({ errorLog }: { errorLog: string }) => {
 
   return (
     <>
-      <Button size="sm" onClick={handleAnalysis} className="mt-4 bg-accent hover:bg-accent/90 text-accent-foreground">
+      <Button size="sm" onClick={handleAnalysis}>
         <Sparkles className="mr-2 h-4 w-4" />
         Analyze with AI
       </Button>
@@ -99,26 +108,7 @@ const AnalyzeLogButton = ({ errorLog }: { errorLog: string }) => {
   );
 };
 
-export function TestDetails({ run }: { run: TestRun }) {
-  const failedTests = run.tests.filter(t => t.status === 'failed').map(t => t.id);
-  const [openItems, setOpenItems] = React.useState<string[]>(failedTests);
-
-  const getStatusClasses = (status: Test['status']) => {
-    switch (status) {
-      case 'passed':
-        return 'border-green-500/20 bg-green-500/5';
-      case 'failed':
-        return 'border-red-500/20 bg-red-500/5';
-      case 'skipped':
-        return 'border-yellow-500/20 bg-yellow-500/5';
-      case 'interrupted':
-        return 'border-gray-500/20 bg-gray-500/5';
-      default:
-        return 'border-border';
-    }
-  };
-  
-  const getBadgeClasses = (status: TestStatus) => {
+const getBadgeClasses = (status: TestStatus) => {
     switch (status) {
         case 'passed':
             return 'border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400';
@@ -131,64 +121,166 @@ export function TestDetails({ run }: { run: TestRun }) {
         default:
             return 'border-border';
     }
-  }
+}
+
+export function TestDetails({ run }: { run: TestRun }) {
+  const failedTests = run.tests.filter(t => t.status === 'failed').map(t => t.id);
+  const [openItems, setOpenItems] = React.useState<string[]>(failedTests);
+  const [filter, setFilter] = React.useState<TestStatus | "all">("all");
+  const [sort, setSort] = React.useState<"default" | "duration-asc" | "duration-desc" | "name-asc" | "name-desc">("default");
+
+
+  const filteredAndSortedTests = React.useMemo(() => {
+    let tests = [...run.tests];
+
+    if (filter !== "all") {
+      tests = tests.filter(t => t.status === filter);
+    }
+
+    switch (sort) {
+      case "duration-asc":
+        tests.sort((a, b) => a.duration - b.duration);
+        break;
+      case "duration-desc":
+        tests.sort((a, b) => b.duration - a.duration);
+        break;
+      case "name-asc":
+        tests.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        tests.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+    }
+
+    return tests;
+  }, [run.tests, filter, sort]);
+
 
   return (
     <Card className="print-break-inside-avoid">
       <CardHeader>
-        <CardTitle>Test Details</CardTitle>
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <div>
+                <CardTitle>Test Details</CardTitle>
+                <CardDescription>
+                    Explore the results of each individual test from this run. Failed tests are expanded by default.
+                </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                 <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
+                    <SelectTrigger className="w-[180px]">
+                        <Filter className="mr-2 h-4 w-4" />
+                        <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="passed">Passed</SelectItem>
+                        <SelectItem value="failed">Failed</SelectItem>
+                        <SelectItem value="skipped">Skipped</SelectItem>
+                        <SelectItem value="interrupted">Interrupted</SelectItem>
+                    </SelectContent>
+                </Select>
+                 <Select value={sort} onValueChange={(value) => setSort(value as any)}>
+                    <SelectTrigger className="w-[180px]">
+                         {sort.endsWith('-asc') ? <SortAsc className="mr-2 h-4 w-4" /> : <SortDesc className="mr-2 h-4 w-4" />}
+                        <SelectValue placeholder="Sort tests" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="default">Default Order</SelectItem>
+                        <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                        <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                        <SelectItem value="duration-asc">Duration (Shortest First)</SelectItem>
+                        <SelectItem value="duration-desc">Duration (Longest First)</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="w-full">
-          {run.tests.map((test) => (
-            <AccordionItem value={test.id} key={test.id} className={cn("rounded-lg mb-2 border-l-4 px-2", getStatusClasses(test.status))}>
-              <AccordionTrigger className="py-3 [&[data-state=open]>svg]:rotate-180">
-                <div className="flex items-center gap-3 flex-1 text-left">
-                  <StatusIcon status={test.status} />
-                  <span className="font-medium flex-1">{test.name}</span>
-                  <div className="flex items-center gap-4">
-                    <Badge variant='outline' className={getBadgeClasses(test.status)}>{test.status}</Badge>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>{test.duration > 0 ? `${test.duration}ms` : '-'}</span>
-                    </div>
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pl-10 pb-4">
-                <p className="text-muted-foreground flex items-start gap-2 text-sm">
-                    <FileText className="h-4 w-4 mt-0.5 shrink-0"/>
-                    <span>{test.description}</span>
-                </p>
-
-                {(test.status === 'failed' || test.status === 'interrupted') && (
-                  <div className="mt-4 space-y-4">
-                    {test.error && (
-                        <div>
-                            <h4 className="font-semibold text-destructive">Failure Reason</h4>
-                            <p className="text-sm text-destructive/90 font-mono bg-destructive/10 p-3 rounded-md mt-1">{test.error}</p>
+        {filteredAndSortedTests.length > 0 ? (
+            <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="w-full space-y-2">
+            {filteredAndSortedTests.map((test) => (
+                <AccordionItem value={test.id} key={test.id} className="border rounded-lg overflow-hidden">
+                <AccordionTrigger className="px-4 py-3 bg-secondary/30 hover:bg-secondary/60 [&[data-state=open]>svg]:rotate-180">
+                    <div className="flex items-center gap-3 flex-1 text-left">
+                        <StatusIcon status={test.status} />
+                        <span className="font-medium flex-1">{test.name}</span>
+                        <div className="flex items-center gap-4">
+                            <Badge variant='outline' className={getBadgeClasses(test.status)}>{test.status}</Badge>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>{test.duration > 0 ? `${test.duration}ms` : '-'}</span>
+                            </div>
                         </div>
-                    )}
-                    
-                    {test.errorLog && <AnalyzeLogButton errorLog={test.errorLog} />}
+                    </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-4 bg-background">
+                    <Tabs defaultValue="details">
+                        <TabsList className="mb-4">
+                            <TabsTrigger value="details">Details</TabsTrigger>
+                            {(test.status === 'failed' || test.status === 'interrupted') && <TabsTrigger value="analysis">AI Analysis</TabsTrigger>}
+                            {test.attachments && test.attachments.length > 0 && <TabsTrigger value="attachments">Attachments</TabsTrigger>}
+                        </TabsList>
 
-                    {test.attachments && test.attachments.length > 0 && (
-                      <div className="space-y-2 pt-4">
-                        <h4 className="font-semibold">Attachments</h4>
-                        {test.attachments.map((att, i) => (
-                          <div key={i} className="border rounded-lg overflow-hidden max-w-2xl shadow-sm">
-                            <Image data-ai-hint="test screenshot" src={att.path} alt={att.description} width={1280} height={720} className="w-full h-auto" />
-                            <p className="p-2 text-sm text-muted-foreground bg-secondary/50">{att.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+                        <TabsContent value="details">
+                             <div className="space-y-4">
+                                <div className="flex items-start gap-3 text-sm">
+                                    <FileText className="h-4 w-4 mt-1 shrink-0 text-muted-foreground"/>
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold">Location</span>
+                                        <span className="text-muted-foreground font-mono text-xs">{test.description.replace('Location: ', '')}</span>
+                                    </div>
+                                </div>
+                                {(test.status === 'failed' || test.status === 'interrupted') && test.error && (
+                                    <div className="flex items-start gap-3 text-sm">
+                                        <XCircle className="h-4 w-4 mt-1 shrink-0 text-destructive"/>
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold text-destructive">Failure Reason</span>
+                                            <p className="text-sm text-destructive/90 font-mono bg-destructive/10 p-3 rounded-md mt-1">{test.error}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="analysis">
+                            {(test.status === 'failed' || test.status === 'interrupted') && test.errorLog && (
+                                <div>
+                                    <p className="text-sm text-muted-foreground mb-4">Get AI-powered suggestions for why this test might have failed.</p>
+                                    <AnalyzeLogButton errorLog={test.errorLog} />
+                                </div>
+                            )}
+                        </TabsContent>
+                        
+                        <TabsContent value="attachments">
+                           {test.attachments && test.attachments.length > 0 && (
+                            <div className="space-y-4">
+                                {test.attachments.map((att, i) => (
+                                <div key={i} className="border rounded-lg overflow-hidden max-w-2xl shadow-sm">
+                                    <p className="p-2 text-sm text-muted-foreground bg-secondary/50 font-medium">{att.description}</p>
+                                    <div className="bg-muted">
+                                        <Image data-ai-hint="test screenshot" src={att.path} alt={att.description} width={1280} height={720} className="w-full h-auto" />
+                                    </div>
+                                </div>
+                                ))}
+                            </div>
+                            )}
+                        </TabsContent>
+
+                    </Tabs>
+                </AccordionContent>
+                </AccordionItem>
+            ))}
+            </Accordion>
+        ) : (
+             <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-12 text-center">
+                <Filter className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-6 text-xl font-semibold text-foreground">No matching tests found</h3>
+                <p className="mt-1 text-base text-muted-foreground">
+                    Adjust your filter or sort criteria to see more results.
+                </p>
+             </div>
+        )}
       </CardContent>
     </Card>
   );
