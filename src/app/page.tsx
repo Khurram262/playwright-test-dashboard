@@ -174,15 +174,23 @@ export default function Home() {
         });
         return;
       }
+      // Sanity check if it's likely JSON before parsing
+      if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) {
+        toast({
+            variant: "destructive",
+            title: "Invalid Content",
+            description: "Pasted content is not a valid JSON report. Please copy the correct report data.",
+        });
+        return;
+      }
       const json = JSON.parse(text);
       processJsonReport(json);
     } catch (error) {
       console.error("Error pasting or parsing JSON:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
       toast({
         variant: "destructive",
         title: "Paste Error",
-        description: `Could not process clipboard content. Make sure it's valid JSON. Error: ${errorMessage}`,
+        description: `Could not parse the pasted content. Please make sure it's a valid Playwright JSON report.`,
       });
     }
   };
