@@ -206,7 +206,7 @@ export default function Home() {
     a.href = url;
     a.download = `test-runs-export-${new Date().toISOString()}.json`;
     document.body.appendChild(a);
-a.click();
+    a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast({
@@ -245,74 +245,78 @@ a.click();
           </div>
         </header>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Test Runs</CardTitle>
-          </CardHeader>
-          <CardContent>
-             {sortedRuns.length === 0 ? (
-              <div 
-                className="text-center py-12 border-2 border-dashed rounded-lg"
-              >
-                <Clipboard className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-medium text-foreground">No test runs found</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Click the &quot;Paste Report&quot; button to get started.
-                </p>
+        <section>
+          <h2 className="text-xl font-semibold mb-4">Test Runs</h2>
+          {sortedRuns.length === 0 ? (
+            <div className="text-center py-16 border-2 border-dashed rounded-lg bg-card">
+              <Clipboard className="mx-auto h-16 w-16 text-muted-foreground" />
+              <h3 className="mt-6 text-xl font-medium text-foreground">No test runs found</h3>
+              <p className="mt-2 text-base text-muted-foreground">
+                Copy a Playwright JSON report and click the &quot;Paste Report&quot; button.
+              </p>
+              <div className="mt-6">
+                <Button onClick={handlePaste}>
+                  <Clipboard className="mr-2 h-4 w-4" />
+                  Paste from Clipboard
+                </Button>
               </div>
-            ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Run ID</TableHead>
-                  <TableHead className="hidden md:table-cell">Execution Date</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Passed</TableHead>
-                  <TableHead>Failed</TableHead>
-                  <TableHead>Skipped</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedRuns.map((run) => {
-                  const summary = getTestRunSummary(run);
-                  return (
-                    <TableRow key={run.runId}>
-                      <TableCell className="font-medium">{run.runId.substring(0, 12)}...</TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
-                        {new Date(run.executionDate).toLocaleString()}
-                      </TableCell>
-                      <TableCell>{summary.total}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                          {summary.passed}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                          {summary.failed}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                          {summary.skipped}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button asChild variant="ghost" size="sm">
-                          <Link href={`/run/${run.runId}`}>
-                            View Report <ArrowRight className="ml-2 h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </TableCell>
+            </div>
+          ) : (
+            <Card className="shadow-lg">
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Run ID</TableHead>
+                      <TableHead className="hidden md:table-cell">Execution Date</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Passed</TableHead>
+                      <TableHead>Failed</TableHead>
+                      <TableHead>Skipped</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-            )}
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedRuns.map((run) => {
+                      const summary = getTestRunSummary(run);
+                      return (
+                        <TableRow key={run.runId}>
+                          <TableCell className="font-medium">{run.runId.substring(0, 12)}...</TableCell>
+                          <TableCell className="hidden md:table-cell text-muted-foreground">
+                            {new Date(run.executionDate).toLocaleString()}
+                          </TableCell>
+                          <TableCell>{summary.total}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              {summary.passed}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                              {summary.failed}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                              {summary.skipped}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button asChild variant="ghost" size="sm">
+                              <Link href={`/run/${run.runId}`}>
+                                View Report <ArrowRight className="ml-2 h-4 w-4" />
+                              </Link>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </section>
       </main>
     </div>
   );
