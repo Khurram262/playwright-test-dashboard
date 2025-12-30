@@ -1,3 +1,4 @@
+// This file is no longer needed with the built-in HTML reporter but is kept for future reference.
 export type TestStatus = 'passed' | 'failed' | 'skipped';
 
 export interface TestAttachment {

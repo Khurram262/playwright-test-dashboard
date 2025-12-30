@@ -6,10 +6,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
+  // Use the custom JSON reporter to output to a file this app can read
+  // and the built-in HTML reporter to automatically open the browser
   reporter: [
     ['json', { outputFile: 'public/report.json' }],
-    ['html', { open: 'never' }],
-    ['line']
+    ['html', { open: 'always' }]
   ],
   use: {
     baseURL: 'http://localhost:9002',

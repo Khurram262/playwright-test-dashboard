@@ -39,8 +39,8 @@ export default function Home() {
               description: `Location: ${spec.file}:${spec.line}:${spec.column}`,
               duration: test.results[0]?.duration || 0,
               status: test.status === 'timedOut' ? 'failed' : test.status,
-              error: test.error?.message,
-              errorLog: test.error?.stack,
+              error: test.results[0]?.error?.message,
+              errorLog: test.results[0]?.error?.stack,
               attachments: [], // Attachments are not in the json report by default
             }))
           )
@@ -88,23 +88,21 @@ export default function Home() {
     }
 
     // Check if there is a report.json from a recent test run
-    fetch('/report.json')
+    fetch('/report.json', { cache: "no-store" })
       .then(response => {
         if (response.ok) {
-          // Invalidate cache to get fresh data
-          const headers = new Headers();
-          headers.append('pragma', 'no-cache');
-          headers.append('cache-control', 'no-cache');
-          return fetch('/report.json', { headers }).then(res => res.json());
+          return response.json();
         }
         throw new Error('No new report file found.');
       })
       .then(data => {
          processJsonReport(data);
-         // Optionally clear the report so it's not re-processed on next load
+         // Once processed, we could rename or delete the file on the server
+         // but that's a more advanced setup. For now, it will be re-processed on reload.
       })
       .catch(() => {
         // This is expected if the file doesn't exist, so we do nothing.
+        console.log("No new report.json found in /public. Upload one manually if needed.");
       });
 
   }, []);
