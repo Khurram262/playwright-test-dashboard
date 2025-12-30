@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/chart';
 import type { TestRun } from '@/types';
 import { getTestRunSummary } from '@/lib/utils';
-import { Briefcase, CheckCircle2, Clock, Package } from 'lucide-react';
+import { Briefcase, CheckCircle2, Clock, HelpCircle, Package } from 'lucide-react';
 
 const chartConfig = {
   passed: { label: 'Passed', color: 'hsl(var(--chart-1))' },
@@ -45,9 +45,10 @@ const PIE_COLORS = {
 
 type OverallSummaryProps = {
   runs: TestRun[];
+  flakyTestsCount: number;
 };
 
-export function OverallSummary({ runs }: OverallSummaryProps) {
+export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
   const overallSummary = React.useMemo(() => {
     let passed = 0;
     let failed = 0;
@@ -123,14 +124,14 @@ export function OverallSummary({ runs }: OverallSummaryProps) {
         </Card>
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg. Duration / Test</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Flaky Tests</CardTitle>
+                <HelpCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                  <div className="text-2xl font-bold">
-                    {(runs.reduce((acc, run) => acc + run.tests.reduce((tAcc, t) => tAcc + t.duration, 0), 0) / (overallSummary.totalTests || 1) / 1000).toFixed(2)}s
+                    {flakyTestsCount}
                 </div>
-                <p className="text-xs text-muted-foreground">Average execution time per test</p>
+                <p className="text-xs text-muted-foreground">Tests with inconsistent outcomes</p>
             </CardContent>
         </Card>
 

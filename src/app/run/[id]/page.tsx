@@ -7,9 +7,11 @@ import { ReportHeader } from '@/components/report-header';
 import { ReportSummaryChart } from '@/components/report-summary-chart';
 import { TestDetails } from '@/components/test-details';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getFlakyTests } from '@/lib/utils';
 
 export default function ReportPage() {
   const [run, setRun] = React.useState<TestRun | null>(null);
+  const [flakyTestNames, setFlakyTestNames] = React.useState<Set<string>>(new Set());
   const [loading, setLoading] = React.useState(true);
   const pathname = usePathname();
 
@@ -22,6 +24,7 @@ export default function ReportPage() {
           const allRuns: TestRun[] = JSON.parse(savedRuns);
           const currentRun = allRuns.find(r => r.runId === runId);
           setRun(currentRun || null);
+          setFlakyTestNames(getFlakyTests(allRuns));
         }
       } catch (e) {
         console.error("Failed to load or parse test runs:", e);
@@ -62,7 +65,7 @@ export default function ReportPage() {
       <ReportHeader run={run} />
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         <ReportSummaryChart run={run} />
-        <TestDetails run={run} />
+        <TestDetails run={run} flakyTestNames={flakyTestNames} />
       </main>
     </>
   );

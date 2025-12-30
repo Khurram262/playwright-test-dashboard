@@ -30,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { analyzeTestFailureLogs } from "@/ai/flows/analyze-test-failure-logs";
 import type { Test, TestRun, TestStatus } from "@/types";
-import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle, Filter, SortAsc, SortDesc, Search, ChevronsRightLeft, Copy, ChevronsUpDown } from "lucide-react";
+import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle, Filter, SortAsc, SortDesc, Search, ChevronsRightLeft, Copy, ChevronsUpDown, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -138,7 +138,12 @@ const getBadgeClasses = (status: TestStatus) => {
     }
 }
 
-export function TestDetails({ run }: { run: TestRun }) {
+type TestDetailsProps = {
+  run: TestRun;
+  flakyTestNames: Set<string>;
+}
+
+export function TestDetails({ run, flakyTestNames }: TestDetailsProps) {
   const failedTestIds = run.tests.filter(t => t.status === 'failed').map(t => t.id);
 
   const [openItems, setOpenItems] = React.useState<string[]>(failedTestIds);
@@ -241,13 +246,21 @@ export function TestDetails({ run }: { run: TestRun }) {
       <CardContent>
         {filteredAndSortedTests.length > 0 ? (
             <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="w-full space-y-2">
-            {filteredAndSortedTests.map((test) => (
+            {filteredAndSortedTests.map((test) => {
+                const isFlaky = flakyTestNames.has(test.name);
+                return (
                 <AccordionItem value={test.id} key={test.id} className="border rounded-lg overflow-hidden">
                 <AccordionTrigger className="px-4 py-3 bg-secondary/30 hover:bg-secondary/60 [&[data-state=open]>svg]:rotate-180">
                     <div className="flex items-center gap-3 flex-1 text-left">
                         <StatusIcon status={test.status} />
                         <span className="font-medium flex-1">{test.name}</span>
                         <div className="flex items-center gap-4">
+                            {isFlaky && (
+                                <Badge variant='outline' className="border-orange-500/50 bg-orange-500/10 text-orange-700 dark:text-orange-400">
+                                    <HelpCircle className="mr-1.5 h-3 w-3" />
+                                    Flaky
+                                </Badge>
+                            )}
                             <Badge variant='outline' className={getBadgeClasses(test.status)}>{test.status}</Badge>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="h-4 w-4" />
@@ -312,7 +325,7 @@ export function TestDetails({ run }: { run: TestRun }) {
                     </Tabs>
                 </AccordionContent>
                 </AccordionItem>
-            ))}
+            )})}
             </Accordion>
         ) : (
              <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-12 text-center">
@@ -327,5 +340,3 @@ export function TestDetails({ run }: { run: TestRun }) {
     </Card>
   );
 }
-
-    

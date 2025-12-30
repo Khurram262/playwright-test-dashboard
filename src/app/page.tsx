@@ -24,10 +24,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard, FileText, Trash2 } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle } from "lucide-react";
 import type { TestRun, Test, TestStatus } from '@/types';
 import { useToast } from "@/hooks/use-toast";
-import { cn, getTestRunSummary } from "@/lib/utils";
+import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
 import { OverallSummary } from "@/components/overall-summary";
 
 const getStatusBadgeClasses = (status: TestStatus) => {
@@ -273,6 +273,7 @@ export default function Home() {
   };
 
   const sortedRuns = [...runs].sort((a, b) => new Date(b.executionDate).getTime() - new Date(a.executionDate).getTime());
+  const flakyTestNames = getFlakyTests(runs);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -315,7 +316,7 @@ export default function Home() {
             </div>
           ) : (
             <>
-              <OverallSummary runs={sortedRuns} />
+              <OverallSummary runs={sortedRuns} flakyTestsCount={flakyTestNames.size} />
               <Card>
                 <CardHeader>
                   <CardTitle>All Test Runs</CardTitle>
@@ -331,12 +332,14 @@ export default function Home() {
                         <TableHead>Failed</TableHead>
                         <TableHead>Skipped</TableHead>
                         <TableHead>Interrupted</TableHead>
+                        <TableHead>Flaky</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {sortedRuns.map((run) => {
                         const summary = getTestRunSummary(run);
+                        const flakyInRun = run.tests.filter(t => flakyTestNames.has(t.name)).length;
                         return (
                           <TableRow key={run.runId}>
                             <TableCell className="font-medium font-mono text-sm">{run.runId.substring(0, 15)}...</TableCell>
@@ -362,6 +365,11 @@ export default function Home() {
                             <TableCell>
                               <Badge variant="outline" className={cn(getStatusBadgeClasses('interrupted'), summary.interrupted > 0 && 'font-semibold')}>
                                 {summary.interrupted}
+                              </Badge>
+                            </TableCell>
+                             <TableCell>
+                              <Badge variant="outline" className={cn('border-orange-500/50 bg-orange-500/10 text-orange-700 dark:text-orange-400', flakyInRun > 0 && 'font-semibold')}>
+                                {flakyInRun}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
@@ -399,5 +407,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
