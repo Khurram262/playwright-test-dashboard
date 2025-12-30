@@ -139,7 +139,6 @@ const getBadgeClasses = (status: TestStatus) => {
 }
 
 export function TestDetails({ run }: { run: TestRun }) {
-  const allTestIds = run.tests.map(t => t.id);
   const failedTestIds = run.tests.filter(t => t.status === 'failed').map(t => t.id);
 
   const [openItems, setOpenItems] = React.useState<string[]>(failedTestIds);
