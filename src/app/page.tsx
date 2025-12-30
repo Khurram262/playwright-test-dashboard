@@ -36,21 +36,6 @@ const getTestRunSummary = (run: TestRun) => {
   return summary;
 };
 
-const getStatusBadgeVariant = (status: TestStatus) => {
-  switch (status) {
-    case 'passed':
-      return 'outline';
-    case 'failed':
-      return 'destructive';
-    case 'skipped':
-      return 'secondary';
-    case 'interrupted':
-      return 'outline'; // Or another variant if you have one
-    default:
-      return 'secondary';
-  }
-};
-
 const getStatusBadgeClasses = (status: TestStatus) => {
   switch (status) {
     case 'passed':
@@ -244,6 +229,7 @@ export default function Home() {
         console.log("No new report.json found.");
       });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePaste = async () => {
