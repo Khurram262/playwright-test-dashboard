@@ -6,29 +6,30 @@ import type { TestRun } from '@/types';
 import { Logo } from '@/components/screens/logo';
 import { ReportSummaryChart } from '@/components/report-summary-chart';
 import { TestDetails } from '@/components/test-details';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 
 export default function ReportPdfPage() {
   const [run, setRun] = React.useState<TestRun | null>(null);
   const pathname = usePathname();
-  const runId = pathname.split('/')[2];
 
   React.useEffect(() => {
-    const savedRuns = localStorage.getItem('testRuns');
-    if (savedRuns) {
-      const allRuns: TestRun[] = JSON.parse(savedRuns);
-      const currentRun = allRuns.find(r => r.runId === runId);
-      if (currentRun) {
-        setRun(currentRun);
-        // Automatically trigger print dialog after a short delay
-        setTimeout(() => {
+    if (pathname) {
+      const runId = pathname.split('/')[2];
+      const savedRuns = localStorage.getItem('testRuns');
+      if (savedRuns) {
+        const allRuns: TestRun[] = JSON.parse(savedRuns);
+        const currentRun = allRuns.find(r => r.runId === runId);
+        if (currentRun) {
+          setRun(currentRun);
+          // Automatically trigger print dialog after a short delay
+          setTimeout(() => {
             window.print();
-        }, 500);
+          }, 500);
+        }
       }
     }
-  }, [runId]);
+  }, [pathname]);
 
   if (!run) {
     return (

@@ -124,7 +124,7 @@ export function TestDetails({ run }: { run: TestRun }) {
         <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="w-full">
           {run.tests.map((test) => (
             <AccordionItem value={test.id} key={test.id} className={cn("rounded-lg mb-2 border-l-4 px-2", getStatusClasses(test.status))}>
-              <AccordionTrigger className="py-3">
+              <AccordionTrigger className="py-3 [&[data-state=open]>svg]:rotate-180">
                 <div className="flex items-center gap-3 flex-1 text-left">
                   <StatusIcon status={test.status} />
                   <span className="font-medium flex-1">{test.name}</span>

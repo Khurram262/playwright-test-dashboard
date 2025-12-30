@@ -14,6 +14,10 @@ const chartConfig = {
   skipped: { label: "Skipped", color: "hsl(var(--chart-4))" },
 };
 
+type ReportSummaryChartProps = {
+  run: TestRun;
+};
+
 export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
   const summary = getTestRunSummary(run);
   const chartData = [
@@ -89,13 +93,9 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
           </div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="justify-center">
          <ChartLegend content={<ChartLegendContent />} />
       </CardFooter>
     </Card>
   );
 }
-
-type ReportSummaryChartProps = {
-  run: TestRun;
-};

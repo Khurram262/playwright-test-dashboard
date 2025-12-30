@@ -30,10 +30,6 @@ export function ReportHeader({ run }: ReportHeaderProps) {
     });
   };
 
-  const handlePrint = () => {
-    window.print();
-  }
-
   return (
     <header className="bg-card border-b sticky top-0 z-20 no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -60,9 +56,11 @@ export function ReportHeader({ run }: ReportHeaderProps) {
               <FileJson className="mr-2 h-4 w-4" />
               Export JSON
             </Button>
-            <Button variant="default" size="sm" onClick={handlePrint}>
-              <Printer className="mr-2 h-4 w-4" />
-              Export PDF
+            <Button asChild variant="default" size="sm">
+              <Link href={`/run/${run.runId}/pdf`} target="_blank">
+                <Printer className="mr-2 h-4 w-4" />
+                Export PDF
+              </Link>
             </Button>
           </div>
         </div>

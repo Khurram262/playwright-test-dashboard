@@ -38,6 +38,7 @@ export default function Home() {
   const { toast } = useToast();
 
   const processJsonReport = (json: any) => {
+    // Check if it's an array of runs (exported format)
     if (Array.isArray(json) && json.length > 0 && json.every(item => 'runId' in item && 'tests' in item)) {
       setRuns(prevRuns => {
         const existingRunIds = new Set(prevRuns.map(run => run.runId));
@@ -63,6 +64,7 @@ export default function Home() {
       return;
     }
 
+    // Check if it's a standard Playwright report
     if (json.config && Array.isArray(json.suites)) {
       let tests: Test[] = [];
 
@@ -125,6 +127,7 @@ export default function Home() {
       return;
     }
     
+    // If neither format matches
     toast({
       variant: "destructive",
       title: "Invalid Format",
@@ -133,6 +136,7 @@ export default function Home() {
   }
   
   React.useEffect(() => {
+    // Load runs from localStorage on initial render
     const savedRuns = localStorage.getItem('testRuns');
     if (savedRuns) {
       try {
@@ -146,12 +150,14 @@ export default function Home() {
       }
     }
 
+    // Check if there is a report.json from a recent test run
     fetch('/report.json', { cache: "no-store" })
       .then(response => response.ok ? response.json() : null)
       .then(data => {
          if (data) processJsonReport(data);
       })
       .catch(() => {
+        // This is expected if the file doesn't exist, so we do nothing.
         console.log("No new report.json found.");
       });
 
