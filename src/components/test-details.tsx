@@ -30,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { analyzeTestFailureLogs } from "@/ai/flows/analyze-test-failure-logs";
 import type { Test, TestRun, TestStatus } from "@/types";
-import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle, Filter, SortAsc, SortDesc, Search, ChevronsRightLeft, Copy, ChevronsUpDown, HelpCircle } from "lucide-react";
+import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle, Filter, SortAsc, SortDesc, Search, ChevronsRightLeft, Copy, ChevronsUpDown, HelpCircle, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +43,7 @@ const StatusIcon = ({ status, className }: { status: Test['status'], className?:
   return null;
 };
 
-const AnalyzeLogButton = ({ errorLog }: { errorLog: string }) => {
+const AnalyzeLogButton = ({ test }: { test: Test }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [analysis, setAnalysis] = React.useState<string | null>(null);
@@ -51,11 +51,11 @@ const AnalyzeLogButton = ({ errorLog }: { errorLog: string }) => {
 
   const handleAnalysis = async () => {
     setIsOpen(true);
-    if (analysis) return; 
+    if (analysis || !test.errorLog) return; 
 
     setIsLoading(true);
     try {
-      const result = await analyzeTestFailureLogs({ errorLog });
+      const result = await analyzeTestFailureLogs({ errorLog: test.errorLog });
       setAnalysis(result.suggestedReasons);
     } catch (error) {
       console.error("AI analysis failed:", error);
@@ -70,25 +70,44 @@ const AnalyzeLogButton = ({ errorLog }: { errorLog: string }) => {
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(errorLog);
+  const handleCopyLog = () => {
+    if (!test.errorLog) return;
+    navigator.clipboard.writeText(test.errorLog);
     toast({
         title: "Copied to Clipboard",
         description: "The error log has been copied.",
     })
   }
+  
+  const handleCopyCommand = () => {
+    const location = test.description.replace('Location: ', '');
+    const command = `npx playwright test ${location}`;
+    navigator.clipboard.writeText(command);
+    toast({
+        title: "Command Copied",
+        description: "The run command has been copied to your clipboard.",
+    });
+  }
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <Button size="sm" onClick={handleAnalysis}>
-            <Sparkles className="mr-2 h-4 w-4" />
-            Analyze with AI
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" onClick={handleCopyCommand} variant="outline">
+          <Play className="mr-2 h-4 w-4" />
+          Copy Run Command
         </Button>
-         <Button size="sm" variant="outline" onClick={handleCopy}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copy Log
-        </Button>
+        {test.errorLog && (
+          <>
+            <Button size="sm" onClick={handleAnalysis}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Analyze with AI
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleCopyLog}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy Log
+            </Button>
+          </>
+        )}
       </div>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[625px]">
@@ -113,7 +132,7 @@ const AnalyzeLogButton = ({ errorLog }: { errorLog: string }) => {
             <div>
                 <h4 className="font-semibold mb-2 mt-4 text-sm">Original Error Log:</h4>
                 <pre className="bg-muted text-muted-foreground p-3 rounded-md text-xs overflow-x-auto">
-                    <code>{errorLog}</code>
+                    <code>{test.errorLog}</code>
                 </pre>
             </div>
           </div>
@@ -273,7 +292,7 @@ export function TestDetails({ run, flakyTestNames }: TestDetailsProps) {
                     <Tabs defaultValue="details">
                         <TabsList className="mb-4">
                             <TabsTrigger value="details">Details</TabsTrigger>
-                            {(test.status === 'failed' || test.status === 'interrupted') && <TabsTrigger value="analysis">AI Analysis</TabsTrigger>}
+                            {(test.status === 'failed' || test.status === 'interrupted') && <TabsTrigger value="analysis">Analysis & Actions</TabsTrigger>}
                             {test.attachments && test.attachments.length > 0 && <TabsTrigger value="attachments">Attachments</TabsTrigger>}
                         </TabsList>
 
@@ -299,10 +318,10 @@ export function TestDetails({ run, flakyTestNames }: TestDetailsProps) {
                         </TabsContent>
                         
                         <TabsContent value="analysis">
-                            {(test.status === 'failed' || test.status === 'interrupted') && test.errorLog && (
+                            {(test.status === 'failed' || test.status === 'interrupted') && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground mb-4">Get AI-powered suggestions for why this test might have failed. You can also copy the raw log.</p>
-                                    <AnalyzeLogButton errorLog={test.errorLog} />
+                                    <p className="text-sm text-muted-foreground mb-4">Copy the command to run this specific test, or use AI to suggest reasons for the failure.</p>
+                                    <AnalyzeLogButton test={test} />
                                 </div>
                             )}
                         </TabsContent>
@@ -340,3 +359,5 @@ export function TestDetails({ run, flakyTestNames }: TestDetailsProps) {
     </Card>
   );
 }
+
+    
