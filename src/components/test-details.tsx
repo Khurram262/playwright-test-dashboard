@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { analyzeTestFailureLogs } from "@/ai/flows/analyze-test-failure-logs";
-import type { Test, TestRun } from "@/types";
-import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle } from "lucide-react";
+import type { Test, TestRun, TestStatus } from "@/types";
+import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +29,7 @@ const StatusIcon = ({ status }: { status: Test['status'] }) => {
   if (status === 'passed') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
   if (status === 'failed') return <XCircle className="h-5 w-5 text-red-500" />;
   if (status === 'skipped') return <MinusCircle className="h-5 w-5 text-yellow-500" />;
+  if (status === 'interrupted') return <AlertCircle className="h-5 w-5 text-gray-500" />;
   return null;
 };
 
@@ -110,10 +111,27 @@ export function TestDetails({ run }: { run: TestRun }) {
         return 'border-red-500/20 bg-red-500/5';
       case 'skipped':
         return 'border-yellow-500/20 bg-yellow-500/5';
+      case 'interrupted':
+        return 'border-gray-500/20 bg-gray-500/5';
       default:
         return 'border-border';
     }
   };
+  
+  const getBadgeClasses = (status: TestStatus) => {
+    switch (status) {
+        case 'passed':
+            return 'border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400';
+        case 'failed':
+            return 'border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-400';
+        case 'skipped':
+            return 'border-yellow-500/50 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
+        case 'interrupted':
+            return 'border-gray-500/50 bg-gray-500/10 text-gray-700 dark:text-gray-400';
+        default:
+            return 'border-border';
+    }
+  }
 
   return (
     <Card className="print-break-inside-avoid">
@@ -129,13 +147,7 @@ export function TestDetails({ run }: { run: TestRun }) {
                   <StatusIcon status={test.status} />
                   <span className="font-medium flex-1">{test.name}</span>
                   <div className="flex items-center gap-4">
-                    <Badge variant={
-                      test.status === 'passed' ? 'outline' : test.status === 'failed' ? 'destructive' : 'secondary'
-                    } className={
-                      test.status === 'passed' ? 'border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400' :
-                      test.status === 'failed' ? 'border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-400' :
-                      'border-yellow-500/50 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400'
-                    }>{test.status}</Badge>
+                    <Badge variant='outline' className={getBadgeClasses(test.status)}>{test.status}</Badge>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Clock className="h-4 w-4" />
                       <span>{test.duration > 0 ? `${test.duration}ms` : '-'}</span>
@@ -149,7 +161,7 @@ export function TestDetails({ run }: { run: TestRun }) {
                     <span>{test.description}</span>
                 </p>
 
-                {test.status === 'failed' && (
+                {(test.status === 'failed' || test.status === 'interrupted') && (
                   <div className="mt-4 space-y-4">
                     {test.error && (
                         <div>

@@ -15,29 +15,112 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/screens/logo";
 import { ArrowRight, Download, Clipboard, FileText } from "lucide-react";
-import type { TestRun, Test } from '@/types';
+import type { TestRun, Test, TestStatus } from '@/types';
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const getTestRunSummary = (run: TestRun) => {
   const summary = {
     passed: 0,
     failed: 0,
     skipped: 0,
+    interrupted: 0,
     total: run.tests.length,
   };
   for (const test of run.tests) {
     if (test.status === "passed") summary.passed++;
     else if (test.status === "failed") summary.failed++;
     else if (test.status === "skipped") summary.skipped++;
+    else if (test.status === "interrupted") summary.interrupted++;
   }
   return summary;
 };
+
+const getStatusBadgeVariant = (status: TestStatus) => {
+  switch (status) {
+    case 'passed':
+      return 'outline';
+    case 'failed':
+      return 'destructive';
+    case 'skipped':
+      return 'secondary';
+    case 'interrupted':
+      return 'outline'; // Or another variant if you have one
+    default:
+      return 'secondary';
+  }
+};
+
+const getStatusBadgeClasses = (status: TestStatus) => {
+  switch (status) {
+    case 'passed':
+      return 'border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400';
+    case 'failed':
+      return 'border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-400';
+    case 'skipped':
+      return 'border-yellow-500/50 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
+    case 'interrupted':
+        return 'border-gray-500/50 bg-gray-500/10 text-gray-700 dark:text-gray-400';
+    default:
+      return '';
+  }
+};
+
 
 export default function Home() {
   const [runs, setRuns] = React.useState<TestRun[]>([]);
   const { toast } = useToast();
 
   const processJsonReport = (json: any) => {
+    // Check if it's the new format
+    if (Array.isArray(json) && json.length > 0 && 'startedAt' in json[0] && 'tests' in json[0]) {
+      const newRuns: TestRun[] = json.map((run: any) => {
+        const tests: Test[] = run.tests.map((test: any) => ({
+          id: `${test.file}-${test.line}-${run.id}`,
+          name: test.title,
+          description: `Location: ${test.file}:${test.line}`,
+          duration: test.duration,
+          status: test.status,
+          error: test.error,
+          errorLog: test.stack,
+          attachments: test.attachments.map((att: any) => ({
+            type: 'screenshot', // Assuming screenshot for now
+            path: att.path,
+            description: att.name,
+          }))
+        }));
+        return {
+          runId: run.id.toString(),
+          executionDate: run.startedAt,
+          tests: tests
+        }
+      });
+      
+      setRuns(prevRuns => {
+        const existingRunIds = new Set(prevRuns.map(run => run.runId));
+        const filteredNewRuns = newRuns.filter((run: TestRun) => !existingRunIds.has(run.runId));
+        
+        if (filteredNewRuns.length === 0) {
+           toast({
+            title: "No New Reports",
+            description: `All imported reports were already present.`,
+          });
+          return prevRuns;
+        }
+
+        const updatedRuns = [...filteredNewRuns, ...prevRuns];
+        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+        
+        toast({
+          title: "Reports Imported",
+          description: `Successfully imported ${filteredNewRuns.length} new test run(s).`,
+        });
+        return updatedRuns;
+      });
+      return;
+    }
+
+
     // Check if it's an array of runs (exported format)
     if (Array.isArray(json) && json.length > 0 && json.every(item => 'runId' in item && 'tests' in item)) {
       setRuns(prevRuns => {
@@ -246,6 +329,7 @@ export default function Home() {
                       <TableHead>Passed</TableHead>
                       <TableHead>Failed</TableHead>
                       <TableHead>Skipped</TableHead>
+                      <TableHead>Interrupted</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -260,18 +344,23 @@ export default function Home() {
                           </TableCell>
                           <TableCell>{summary.total}</TableCell>
                           <TableCell>
-                             <Badge variant="outline" className="border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400">
+                             <Badge variant="outline" className={getStatusBadgeClasses('passed')}>
                               {summary.passed}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                             <Badge variant="outline" className="border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-400">
+                             <Badge variant="outline" className={getStatusBadgeClasses('failed')}>
                               {summary.failed}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                             <Badge variant="outline" className="border-yellow-500/50 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400">
+                             <Badge variant="outline" className={getStatusBadgeClasses('skipped')}>
                               {summary.skipped}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                             <Badge variant="outline" className={getStatusBadgeClasses('interrupted')}>
+                              {summary.interrupted}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">

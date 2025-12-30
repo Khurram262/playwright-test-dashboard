@@ -6,12 +6,13 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLe
 import { getTestRunSummary } from "@/lib/utils";
 import type { TestRun } from "@/types";
 import { Pie, PieChart, Cell } from "recharts";
-import { CheckCircle2, MinusCircle, Package, XCircle } from "lucide-react";
+import { CheckCircle2, MinusCircle, Package, XCircle, AlertCircle } from "lucide-react";
 
 const chartConfig = {
   passed: { label: "Passed", color: "hsl(var(--chart-2))" },
   failed: { label: "Failed", color: "hsl(var(--chart-3))" },
   skipped: { label: "Skipped", color: "hsl(var(--chart-4))" },
+  interrupted: { label: "Interrupted", color: "hsl(var(--chart-5))" },
 };
 
 type ReportSummaryChartProps = {
@@ -24,6 +25,7 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
     { name: "passed", value: summary.passed, fill: "var(--color-passed)" },
     { name: "failed", value: summary.failed, fill: "var(--color-failed)" },
     { name: "skipped", value: summary.skipped, fill: "var(--color-skipped)" },
+    { name: "interrupted", value: summary.interrupted, fill: "var(--color-interrupted)" },
   ].filter(d => d.value > 0);
   
   const totalDuration = run.tests.reduce((acc, test) => acc + test.duration, 0);
@@ -37,8 +39,8 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex items-center justify-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex items-center justify-center lg:col-span-1">
             <ChartContainer config={chartConfig} className="min-h-[180px] w-full max-w-[250px]">
               <PieChart>
                 <ChartTooltip
@@ -53,7 +55,7 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
               </PieChart>
             </ChartContainer>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:col-span-2">
              <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
@@ -90,6 +92,17 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                 <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{summary.skipped}</div>
               </CardContent>
             </Card>
+            {summary.interrupted > 0 && (
+                 <Card className="border-gray-500/50 bg-gray-500/5">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Interrupted</CardTitle>
+                    <AlertCircle className="h-4 w-4 text-gray-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{summary.interrupted}</div>
+                  </CardContent>
+                </Card>
+            )}
           </div>
         </div>
       </CardContent>

@@ -1,5 +1,5 @@
 // This file is no longer needed with the built-in HTML reporter but is kept for future reference.
-export type TestStatus = 'passed' | 'failed' | 'skipped';
+export type TestStatus = 'passed' | 'failed' | 'skipped' | 'interrupted' | 'timedOut';
 
 export interface TestAttachment {
   type: 'screenshot' | 'video';
