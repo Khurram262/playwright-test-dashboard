@@ -34,11 +34,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, FileJson, Play } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, FileJson, Play, Bell } from "lucide-react";
 import type { TestRun, Test, TestStatus, TestAttachment } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
 import { OverallSummary } from "@/components/overall-summary";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 type ToastInfo = {
   title: string;
@@ -76,8 +77,6 @@ export default function Home() {
     const processAttachments = (attachments: any[]): TestAttachment[] => {
       if (!attachments) return [];
       return attachments.map((att: any) => {
-        // If path is a local file path, convert to a placeholder or data URI
-        // For this fix, we will use a placeholder since we can't access local files.
         const isLocalPath = !att.path.startsWith('http') && !att.path.startsWith('data:');
         return {
           type: att.contentType?.includes('video') ? 'video' : 'screenshot',
@@ -86,10 +85,12 @@ export default function Home() {
         };
       });
     };
+    
+    let newRuns: TestRun[] = [];
 
     // New format check (array of runs with `startedAt` and `tests`)
     if (Array.isArray(json) && json.length > 0 && 'startedAt' in json[0] && 'tests' in json[0]) {
-      const newRuns: TestRun[] = json.map((run: any) => ({
+      newRuns = json.map((run: any) => ({
         runId: run.id?.toString() || `run-${run.startedAt}`,
         executionDate: run.startedAt,
         tests: run.tests.map((test: any): Test => ({
@@ -103,57 +104,13 @@ export default function Home() {
           attachments: processAttachments(test.attachments),
         })),
       }));
-
-      setRuns(prevRuns => {
-        const existingRunIds = new Set(prevRuns.map(r => r.runId));
-        const filteredNewRuns = newRuns.filter(run => !existingRunIds.has(run.runId));
-
-        if (filteredNewRuns.length === 0) {
-          setToastToShow({
-            title: "No New Reports",
-            description: "All imported reports were already present.",
-          });
-          return prevRuns;
-        }
-
-        const updatedRuns = [...filteredNewRuns, ...prevRuns];
-        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-        setToastToShow({
-          title: "Reports Imported",
-          description: `Successfully imported ${filteredNewRuns.length} new test run(s).`,
-        });
-        return updatedRuns;
-      });
-      return;
     }
-
     // Check if it's an array of our internal TestRun format
-    if (Array.isArray(json) && json.length > 0 && 'runId' in json[0] && 'tests' in json[0]) {
-       setRuns(prevRuns => {
-        const existingRunIds = new Set(prevRuns.map(r => r.runId));
-        const newRuns = json.filter((run: TestRun) => !existingRunIds.has(run.runId));
-        
-        if (newRuns.length === 0) {
-           setToastToShow({
-            title: "No New Reports",
-            description: `All imported reports were already present.`,
-          });
-          return prevRuns;
-        }
-
-        const updatedRuns = [...newRuns, ...prevRuns];
-        localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-        setToastToShow({
-          title: "Reports Imported",
-          description: `Successfully imported ${newRuns.length} new test run(s).`,
-        });
-        return updatedRuns;
-      });
-      return;
+    else if (Array.isArray(json) && json.length > 0 && 'runId' in json[0] && 'tests' in json[0]) {
+       newRuns = json;
     }
-
     // Original Playwright report format
-    if (json.config && Array.isArray(json.suites)) {
+    else if (json.config && Array.isArray(json.suites)) {
         let tests: Test[] = [];
         function extractTestsFromSuites(suites: any[]): Test[] {
           let extractedTests: Test[] = [];
@@ -200,25 +157,74 @@ export default function Home() {
           executionDate: new Date().toISOString(),
           tests: tests
         };
-
-        setRuns(prevRuns => {
-          const updatedRuns = [newRun, ...prevRuns];
-          localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-          setToastToShow({
-            title: "Report Loaded",
-            description: `Successfully loaded ${newRun.tests.length} tests from the report.`,
-          });
-          return updatedRuns;
+        newRuns = [newRun];
+    } else {
+        setToastToShow({
+          variant: "destructive",
+          title: "Invalid Format",
+          description: "Please paste a valid Playwright JSON report or a previously exported runs file.",
         });
         return;
+    }
+
+    setRuns(prevRuns => {
+      const existingRunIds = new Set(prevRuns.map(r => r.runId));
+      const filteredNewRuns = newRuns.filter(run => !existingRunIds.has(run.runId));
+
+      if (filteredNewRuns.length === 0) {
+        setToastToShow({
+          title: "No New Reports",
+          description: "All imported reports were already present.",
+        });
+        return prevRuns;
       }
 
-    setToastToShow({
-      variant: "destructive",
-      title: "Invalid Format",
-      description: "Please paste a valid Playwright JSON report or a previously exported runs file.",
+      const updatedRuns = [...filteredNewRuns, ...prevRuns];
+      localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
+      setToastToShow({
+        title: "Reports Imported",
+        description: `Successfully imported ${filteredNewRuns.length} new test run(s).`,
+      });
+
+      // Check for failures and send notification
+      const hasFailures = filteredNewRuns.some(run => getTestRunSummary(run).failed > 0);
+      if (hasFailures) {
+          sendFailureNotification(filteredNewRuns);
+      }
+
+      return updatedRuns;
     });
+
   }, []);
+
+  const sendFailureNotification = (newRuns: TestRun[]) => {
+      if (Notification.permission !== 'granted') return;
+
+      const runsWithFailures = newRuns.filter(run => getTestRunSummary(run).failed > 0);
+      if (runsWithFailures.length === 0) return;
+
+      const failedCount = runsWithFailures.reduce((acc, run) => acc + getTestRunSummary(run).failed, 0);
+      const totalNewRuns = newRuns.length;
+      
+      const title = `${failedCount} New Test Failure(s)`;
+      const body = `Found in ${runsWithFailures.length} of the ${totalNewRuns} newly imported run(s). Click to view reports.`;
+
+      new Notification(title, { body, icon: '/logo.svg' });
+  }
+
+  const requestNotificationPermission = () => {
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                toast({
+                    title: "Notifications Enabled",
+                    description: "You'll be alerted about new test failures.",
+                });
+            }
+        });
+    }
+  }
+
 
   React.useEffect(() => {
     if (toastToShow) {
@@ -241,6 +247,8 @@ export default function Home() {
         localStorage.removeItem('testRuns');
       }
     }
+    // Request notification permission on load
+    requestNotificationPermission();
   }, []);
 
   React.useEffect(() => {
@@ -357,22 +365,31 @@ export default function Home() {
           </h1>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" onClick={() => setIsRawJsonDialogOpen(true)}>
-            <FileJson className="mr-2 h-4 w-4" />
-            Import Raw JSON
-          </Button>
-          <Button variant="outline" onClick={handlePaste}>
-            <Clipboard className="mr-2 h-4 w-4" />
-            Paste Report
-          </Button>
-          <Button onClick={handleExport} disabled={runs.length === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            Export Runs
-          </Button>
-          <Button variant="destructive" onClick={() => setIsClearAlertOpen(true)} disabled={runs.length === 0}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            Clear Data
-          </Button>
+          { Notification.permission !== 'granted' && (
+              <Button variant="outline" size="sm" onClick={requestNotificationPermission}>
+                  <Bell className="mr-2 h-4 w-4" />
+                  Enable Notifications
+              </Button>
+          )}
+          <ThemeSwitcher />
+          <div className="hidden sm:flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsRawJsonDialogOpen(true)}>
+              <FileJson className="mr-2 h-4 w-4" />
+              Import Raw JSON
+            </Button>
+            <Button variant="outline" onClick={handlePaste}>
+              <Clipboard className="mr-2 h-4 w-4" />
+              Paste Report
+            </Button>
+            <Button onClick={handleExport} disabled={runs.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export Runs
+            </Button>
+            <Button variant="destructive" onClick={() => setIsClearAlertOpen(true)} disabled={runs.length === 0}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear Data
+            </Button>
+          </div>
         </div>
       </header>
       <main className="p-4 sm:p-6 space-y-6">
