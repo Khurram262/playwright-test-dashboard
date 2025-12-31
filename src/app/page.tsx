@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, FileJson } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, FileJson, Play } from "lucide-react";
 import type { TestRun, Test, TestStatus } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
