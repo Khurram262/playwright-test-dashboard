@@ -40,6 +40,13 @@ import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
 import { OverallSummary } from "@/components/overall-summary";
 
+type ToastInfo = {
+  title: string;
+  description: string;
+  variant?: 'default' | 'destructive';
+};
+
+
 const getStatusBadgeClasses = (status: TestStatus) => {
   switch (status) {
     case 'passed':
@@ -62,6 +69,8 @@ export default function Home() {
   const [isRawJsonDialogOpen, setIsRawJsonDialogOpen] = React.useState(false);
   const [rawJsonContent, setRawJsonContent] = React.useState("");
   const { toast } = useToast();
+  const [toastToShow, setToastToShow] = React.useState<ToastInfo | null>(null);
+
 
   const processJsonReport = React.useCallback((json: any) => {
     const processAttachments = (attachments: any[]): TestAttachment[] => {
@@ -100,7 +109,7 @@ export default function Home() {
         const filteredNewRuns = newRuns.filter(run => !existingRunIds.has(run.runId));
 
         if (filteredNewRuns.length === 0) {
-          toast({
+          setToastToShow({
             title: "No New Reports",
             description: "All imported reports were already present.",
           });
@@ -109,7 +118,7 @@ export default function Home() {
 
         const updatedRuns = [...filteredNewRuns, ...prevRuns];
         localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-        toast({
+        setToastToShow({
           title: "Reports Imported",
           description: `Successfully imported ${filteredNewRuns.length} new test run(s).`,
         });
@@ -125,7 +134,7 @@ export default function Home() {
         const newRuns = json.filter((run: TestRun) => !existingRunIds.has(run.runId));
         
         if (newRuns.length === 0) {
-           toast({
+           setToastToShow({
             title: "No New Reports",
             description: `All imported reports were already present.`,
           });
@@ -134,7 +143,7 @@ export default function Home() {
 
         const updatedRuns = [...newRuns, ...prevRuns];
         localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-        toast({
+        setToastToShow({
           title: "Reports Imported",
           description: `Successfully imported ${newRuns.length} new test run(s).`,
         });
@@ -178,7 +187,7 @@ export default function Home() {
         tests = extractTestsFromSuites(json.suites);
 
         if (tests.length === 0) {
-           toast({
+           setToastToShow({
               variant: "destructive",
               title: "Empty Report",
               description: "The provided report does not contain any tests.",
@@ -195,7 +204,7 @@ export default function Home() {
         setRuns(prevRuns => {
           const updatedRuns = [newRun, ...prevRuns];
           localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-          toast({
+          setToastToShow({
             title: "Report Loaded",
             description: `Successfully loaded ${newRun.tests.length} tests from the report.`,
           });
@@ -204,12 +213,19 @@ export default function Home() {
         return;
       }
 
-    toast({
+    setToastToShow({
       variant: "destructive",
       title: "Invalid Format",
       description: "Please paste a valid Playwright JSON report or a previously exported runs file.",
     });
-  }, [toast]);
+  }, []);
+
+  React.useEffect(() => {
+    if (toastToShow) {
+      toast(toastToShow);
+      setToastToShow(null);
+    }
+  }, [toastToShow, toast]);
 
   React.useEffect(() => {
     // Load from localStorage on initial mount
@@ -494,5 +510,7 @@ export default function Home() {
       </AlertDialog>
     </div>
   );
+
+    
 
     
