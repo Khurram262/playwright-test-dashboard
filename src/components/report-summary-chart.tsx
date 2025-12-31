@@ -41,7 +41,6 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
 
     const totalDuration = run.tests.reduce((acc, test) => acc + test.duration, 0);
     
-    // Data for the stacked radial chart
     const totalConsideredForPassRate = summary.passed + summary.failed;
     const radialChartData = totalConsideredForPassRate > 0 ? [
         { name: 'failed', value: summary.failed, fill: 'hsl(var(--chart-3))' },
