@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -34,7 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/screens/logo";
 import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, FileJson, Play } from "lucide-react";
-import type { TestRun, Test, TestStatus } from '@/types';
+import type { TestRun, Test, TestStatus, TestAttachment } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
 import { OverallSummary } from "@/components/overall-summary";
@@ -63,6 +64,20 @@ export default function Home() {
   const { toast } = useToast();
 
   const processJsonReport = React.useCallback((json: any) => {
+    const processAttachments = (attachments: any[]): TestAttachment[] => {
+      if (!attachments) return [];
+      return attachments.map((att: any) => {
+        // If path is a local file path, convert to a placeholder or data URI
+        // For this fix, we will use a placeholder since we can't access local files.
+        const isLocalPath = !att.path.startsWith('http') && !att.path.startsWith('data:');
+        return {
+          type: att.contentType?.includes('video') ? 'video' : 'screenshot',
+          path: isLocalPath ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' : att.path,
+          description: att.name || 'Attachment',
+        };
+      });
+    };
+
     // New format check (array of runs with `startedAt` and `tests`)
     if (Array.isArray(json) && json.length > 0 && 'startedAt' in json[0] && 'tests' in json[0]) {
       const newRuns: TestRun[] = json.map((run: any) => ({
@@ -76,11 +91,7 @@ export default function Home() {
           status: test.status,
           error: test.error,
           errorLog: test.stack,
-          attachments: test.attachments?.map((att: any) => ({
-            type: 'screenshot',
-            path: att.path,
-            description: att.name,
-          })) || [],
+          attachments: processAttachments(test.attachments),
         })),
       }));
 
@@ -152,7 +163,7 @@ export default function Home() {
                       status: test.status === 'timedOut' ? 'failed' : test.status,
                       error: result?.error?.message,
                       errorLog: result?.error?.stack,
-                      attachments: [],
+                      attachments: processAttachments(result?.attachments),
                     });
                   }
                 }
@@ -214,7 +225,9 @@ export default function Home() {
         localStorage.removeItem('testRuns');
       }
     }
+  }, []);
 
+  React.useEffect(() => {
     // Auto-fetch latest report.json
     fetch('/report.json', { cache: "no-store" })
       .then(response => {
@@ -481,4 +494,7 @@ export default function Home() {
       </AlertDialog>
     </div>
   );
-}
+
+    
+
+    
