@@ -40,10 +40,16 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
 
     const totalDuration = run.tests.reduce((acc, test) => acc + test.duration, 0);
     const passPercentage = summary.total > 0 ? (summary.passed / summary.total) * 100 : 0;
-
-    const radialChartData = [
-        { name: 'passed', value: passPercentage, fill: 'hsl(var(--primary))' },
+    
+    // Data for the stacked radial chart
+    const totalConsidered = summary.passed + summary.failed;
+    const radialChartData = totalConsidered > 0 ? [
+        { name: 'failed', value: 100, fill: 'hsl(var(--chart-3))' },
+        { name: 'passed', value: (summary.passed / totalConsidered) * 100, fill: 'hsl(var(--chart-1))' },
+    ] : [
+        { name: 'passed', value: 100, fill: 'hsl(var(--chart-1))' }
     ];
+
 
     return (
         <Card className="print-break-inside-avoid">
@@ -68,6 +74,7 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                     innerRadius="70%"
                                     outerRadius="100%"
                                     barSize={24}
+                                    stackOffset="expand"
                                 >
                                     <RadialBar
                                         background={{ fill: 'hsl(var(--secondary))' }}
