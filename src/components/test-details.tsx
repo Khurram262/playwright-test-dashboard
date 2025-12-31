@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -27,11 +28,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { analyzeTestFailureLogs } from "@/ai/flows/analyze-test-failure-logs";
 import type { Test, TestRun, TestStatus, TestAttachment } from "@/types";
-import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle, Filter, SortAsc, SortDesc, Search, ChevronsRightLeft, Copy, ChevronsUpDown, HelpCircle, Play } from "lucide-react";
+import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle, Filter, SortAsc, SortDesc, Search, ChevronsRightLeft, Copy, ChevronsUpDown, HelpCircle, Play, Ticket } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -44,14 +47,83 @@ const StatusIcon = ({ status, className }: { status: Test['status'], className?:
   return null;
 };
 
+const CreateIssueDialog = ({ test, isOpen, onOpenChange }: { test: Test, isOpen: boolean, onOpenChange: (open: boolean) => void}) => {
+    const { toast } = useToast();
+    const [title, setTitle] = React.useState(`Test Failed: ${test.name}`);
+    const [body, setBody] = React.useState(
+`**Test:** ${test.name}
+**File:** ${test.description.replace('Location: ', '')}
+**Error:** 
+\`\`\`
+${test.error}
+\`\`\`
+**Full Log:**
+\`\`\`
+${test.errorLog}
+\`\`\`
+`
+    );
+
+    const handleCreateIssue = () => {
+        // Placeholder for actual issue creation logic
+        console.log("Creating issue...", { title, body });
+        toast({
+            title: "Issue Creation Simulated",
+            description: "Check the console for the issue payload.",
+        });
+        onOpenChange(false);
+    }
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Create New Issue</DialogTitle>
+                    <DialogDescription>
+                        Create an issue in your preferred tracker. This is currently a demonstration.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="issue-tracker">Issue Tracker</Label>
+                         <Select defaultValue="github">
+                            <SelectTrigger id="issue-tracker">
+                                <SelectValue placeholder="Select a tracker" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="github">GitHub</SelectItem>
+                                <SelectItem value="jira" disabled>Jira (coming soon)</SelectItem>
+                                <SelectItem value="linear" disabled>Linear (coming soon)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="issue-title">Title</Label>
+                        <Input id="issue-title" value={title} onChange={(e) => setTitle(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="issue-body">Body</Label>
+                        <Textarea id="issue-body" value={body} onChange={(e) => setBody(e.target.value)} className="min-h-[250px] font-mono text-xs" />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={handleCreateIssue}>Create Issue</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 const AnalyzeLogButton = ({ test }: { test: Test }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isAnalysisOpen, setIsAnalysisOpen] = React.useState(false);
+  const [isIssueOpen, setIsIssueOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [analysis, setAnalysis] = React.useState<string | null>(null);
   const { toast } = useToast();
 
   const handleAnalysis = async () => {
-    setIsOpen(true);
+    setIsAnalysisOpen(true);
     if (analysis || !test.errorLog) return; 
 
     setIsLoading(true);
@@ -103,6 +175,10 @@ const AnalyzeLogButton = ({ test }: { test: Test }) => {
                 <Sparkles className="mr-2 h-4 w-4" />
                 Analyze with AI
             </Button>
+            <Button size="sm" variant="outline" onClick={() => setIsIssueOpen(true)}>
+                <Ticket className="mr-2 h-4 w-4" />
+                Create Issue
+            </Button>
             <Button size="sm" variant="outline" onClick={handleCopyLog}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copy Log
@@ -110,7 +186,7 @@ const AnalyzeLogButton = ({ test }: { test: Test }) => {
           </>
         )}
       </div>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isAnalysisOpen} onOpenChange={setIsAnalysisOpen}>
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
             <DialogTitle>AI Error Log Analysis</DialogTitle>
@@ -139,6 +215,7 @@ const AnalyzeLogButton = ({ test }: { test: Test }) => {
           </div>
         </DialogContent>
       </Dialog>
+      <CreateIssueDialog test={test} isOpen={isIssueOpen} onOpenChange={setIsIssueOpen} />
     </>
   );
 };
@@ -369,3 +446,5 @@ export function TestDetails({ run, flakyTestNames = new Set() }: TestDetailsProp
     </Card>
   );
 }
+
+    
