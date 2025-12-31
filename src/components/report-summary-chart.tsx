@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bar, BarChart, CartesianGrid, Label, RadialBar, RadialBarChart, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Label, RadialBar, RadialBarChart, XAxis, YAxis, Cell } from "recharts";
 import {
     Card,
     CardContent,
@@ -31,7 +31,7 @@ type ReportSummaryChartProps = {
 
 export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
     const summary = getTestRunSummary(run);
-    const chartData = [
+    const barChartData = [
         { name: "Passed", value: summary.passed, fill: "var(--color-passed)" },
         { name: "Failed", value: summary.failed, fill: "var(--color-failed)" },
         { name: "Skipped", value: summary.skipped, fill: "var(--color-skipped)" },
@@ -42,10 +42,10 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
     const passPercentage = summary.total > 0 ? (summary.passed / summary.total) * 100 : 0;
     
     // Data for the stacked radial chart
-    const totalConsidered = summary.passed + summary.failed;
-    const radialChartData = totalConsidered > 0 ? [
-        { name: 'failed', value: 100, fill: 'hsl(var(--chart-3))' },
-        { name: 'passed', value: (summary.passed / totalConsidered) * 100, fill: 'hsl(var(--chart-1))' },
+    const totalConsideredForPassRate = summary.passed + summary.failed;
+    const radialChartData = totalConsideredForPassRate > 0 ? [
+        { name: 'failed', value: summary.failed, fill: 'hsl(var(--chart-3))' },
+        { name: 'passed', value: summary.passed, fill: 'hsl(var(--chart-1))' },
     ] : [
         { name: 'passed', value: 100, fill: 'hsl(var(--chart-1))' }
     ];
@@ -80,10 +80,17 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                         background={{ fill: 'hsl(var(--secondary))' }}
                                         dataKey="value"
                                         cornerRadius={12}
-                                    />
+                                    >
+                                      {radialChartData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                      ))}
+                                    </RadialBar>
                                     <Label 
                                       content={({ viewBox }) => {
                                         if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                            const considered = summary.passed + summary.failed;
+                                            const percentage = considered > 0 ? (summary.passed / considered) * 100 : (summary.passed > 0 ? 100 : 0);
+
                                             return (
                                                 <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
                                                     <tspan
@@ -91,7 +98,7 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                                         y={(viewBox.cy || 0) - 10}
                                                         className="fill-foreground text-4xl font-bold"
                                                     >
-                                                        {passPercentage.toFixed(0)}%
+                                                        {percentage.toFixed(0)}%
                                                     </tspan>
                                                      <tspan
                                                         x={viewBox.cx}
@@ -129,7 +136,7 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                  <ChartContainer config={chartConfig} className="h-[200px] w-full">
                                     <BarChart
                                         accessibilityLayer
-                                        data={chartData}
+                                        data={barChartData}
                                         layout="vertical"
                                         margin={{ left: 10, top: 0, right: 10, bottom: 0 }}
                                     >
@@ -141,6 +148,9 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                             content={<ChartTooltipContent />}
                                         />
                                         <Bar dataKey="value" layout="vertical" radius={5} barSize={32}>
+                                           {barChartData.map((entry, index) => (
+                                             <Cell key={`cell-${index}`} fill={entry.fill} />
+                                           ))}
                                         </Bar>
                                     </BarChart>
                                 </ChartContainer>
