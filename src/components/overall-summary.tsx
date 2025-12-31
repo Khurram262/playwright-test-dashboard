@@ -157,10 +157,9 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
                                 innerRadius="60%"
                                 strokeWidth={5}
                             >
-                                <Cell name="Passed" fill="var(--color-passed)" />
-                                <Cell name="Failed" fill="var(--color-failed)" />
-                                <Cell name="Skipped" fill="var(--color-skipped)" />
-                                <Cell name="Interrupted" fill="var(--color-interrupted)" />
+                                {pieChartData.map((entry) => (
+                                  <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                ))}
                             </Pie>
                              <ChartLegend
                                 content={<ChartLegendContent nameKey="name" />}
@@ -238,3 +237,5 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
     </div>
   );
 }
+
+    
