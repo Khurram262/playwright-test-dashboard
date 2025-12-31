@@ -232,6 +232,14 @@ export default function Home() {
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
+      if (!text) {
+        toast({
+          variant: "destructive",
+          title: "Clipboard Empty",
+          description: "Your clipboard is empty. Please copy a valid report.",
+        });
+        return;
+      }
       const json = JSON.parse(text);
       processJsonReport(json);
     } catch (error) {
@@ -239,7 +247,7 @@ export default function Home() {
       toast({
         variant: "destructive",
         title: "Invalid Content",
-        description: "Pasted content is not valid JSON or clipboard is empty. Please copy a valid report.",
+        description: "Pasted content is not valid JSON. Please copy a valid report.",
       });
     }
   };
