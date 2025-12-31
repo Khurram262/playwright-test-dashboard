@@ -86,10 +86,10 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
   ].filter(d => d.value > 0);
 
   const barChartData = runs.map(run => ({
-    name: run.runId.substring(0, 12) + '...',
-    date: new Date(run.executionDate).toLocaleDateString(),
+    runId: run.runId.substring(0, 12) + '...',
+    date: new Date(run.executionDate),
     total: run.tests.length,
-  })).reverse();
+  })).slice(0, 15).reverse(); // Show last 15 runs
 
 
   return (
@@ -137,13 +137,13 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
             </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
+        <Card className="sm:col-span-2 lg:col-span-2">
             <CardHeader>
                 <CardTitle>Overall Test Status</CardTitle>
                 <CardDescription>Aggregated results from all {overallSummary.totalRuns} runs.</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-center">
-                <ChartContainer config={chartConfig} className="h-[250px] w-full max-w-[250px]">
+                <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
                    <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <ChartTooltip
@@ -154,8 +154,7 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
                                 data={pieChartData}
                                 dataKey="value"
                                 nameKey="name"
-                                innerRadius="65%"
-                                outerRadius="90%"
+                                innerRadius="60%"
                                 strokeWidth={5}
                             >
                                 <Cell name="Passed" fill="var(--color-passed)" />
@@ -165,7 +164,7 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
                             </Pie>
                              <ChartLegend
                                 content={<ChartLegendContent nameKey="name" />}
-                                className="-translate-y-[10px] [&_button]:w-auto"
+                                className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
                             />
                         </PieChart>
                     </ResponsiveContainer>
@@ -173,25 +172,65 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
             </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
+        <Card className="sm:col-span-2 lg:col-span-2">
             <CardHeader>
                 <CardTitle>Tests Per Run</CardTitle>
-                <CardDescription>Total number of tests in recent runs.</CardDescription>
+                <CardDescription>Total number of tests in the last {barChartData.length} runs.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                     <BarChart data={barChartData} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid vertical={false} />
+                     <BarChart 
+                        data={barChartData} 
+                        margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+                     >
+                        <defs>
+                            <linearGradient id="fillTotal" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
                         <XAxis
                             dataKey="date"
                             tickLine={false}
-                            tickMargin={10}
                             axisLine={false}
+                            tickMargin={8}
+                            tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                         />
-                        <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="total" fill="hsl(var(--primary))" radius={4} />
+                        <YAxis 
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
+                        />
+                        <ChartTooltip 
+                            cursor={false}
+                            content={({ active, payload, label }) => {
+                                if (active && payload && payload.length) {
+                                    return (
+                                        <div className="bg-background/95 p-2 shadow-lg border rounded-lg text-sm">
+                                            <p className="font-bold">{`${payload[0].value} tests`}</p>
+                                            <p className="text-muted-foreground">
+                                                {new Date(label).toLocaleString(undefined, {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: 'numeric',
+                                                    minute: '2-digit'
+                                                })}
+                                            </p>
+                                        </div>
+                                    )
+                                }
+                                return null;
+                            }}
+                        />
+                        <Bar 
+                            dataKey="total" 
+                            fill="url(#fillTotal)"
+                            radius={[4, 4, 0, 0]} 
+                        />
                     </BarChart>
                 </ChartContainer>
             </CardContent>
