@@ -49,7 +49,7 @@ const getStatusBadgeClasses = (status: TestStatus) => {
     case 'skipped':
       return 'border-yellow-500/50 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
     case 'interrupted':
-        return 'border-gray-500/50 bg-gray-500/10 text-gray-700 dark:text-gray-400';
+      return 'border-gray-500/50 bg-gray-500/10 text-gray-700 dark:text-gray-400';
     default:
       return '';
   }
@@ -494,7 +494,3 @@ export default function Home() {
       </AlertDialog>
     </div>
   );
-
-    
-
-    

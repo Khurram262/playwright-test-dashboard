@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -39,13 +40,12 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
     ];
 
     const totalDuration = run.tests.reduce((acc, test) => acc + test.duration, 0);
-    const passPercentage = summary.total > 0 ? (summary.passed / summary.total) * 100 : 0;
     
     // Data for the stacked radial chart
     const totalConsideredForPassRate = summary.passed + summary.failed;
     const radialChartData = totalConsideredForPassRate > 0 ? [
         { name: 'failed', value: summary.failed, fill: 'hsl(var(--chart-3))' },
-        { name: 'passed', value: summary.passed, fill: 'hsl(var(--chart-1))' },
+        { name: 'passed', value: summary.passed + summary.failed, fill: 'hsl(var(--chart-1))' },
     ] : [
         { name: 'passed', value: 100, fill: 'hsl(var(--chart-1))' }
     ];
@@ -74,17 +74,12 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                     innerRadius="70%"
                                     outerRadius="100%"
                                     barSize={24}
-                                    stackOffset="expand"
                                 >
                                     <RadialBar
                                         background={{ fill: 'hsl(var(--secondary))' }}
                                         dataKey="value"
                                         cornerRadius={12}
-                                    >
-                                      {radialChartData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                                      ))}
-                                    </RadialBar>
+                                    />
                                     <Label 
                                       content={({ viewBox }) => {
                                         if (viewBox && "cx" in viewBox && "cy" in viewBox) {

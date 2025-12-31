@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -27,7 +28,7 @@ import {
 } from '@/components/ui/chart';
 import type { TestRun } from '@/types';
 import { getTestRunSummary } from '@/lib/utils';
-import { Briefcase, CheckCircle2, Clock, HelpCircle, Package } from 'lucide-react';
+import { Briefcase, CheckCircle2, Clock, HelpCircle, Package, AlertCircle } from 'lucide-react';
 
 const chartConfig = {
   passed: { label: 'Passed', color: 'hsl(var(--chart-1))' },
