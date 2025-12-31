@@ -21,10 +21,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, FileJson } from "lucide-react";
 import type { TestRun, Test, TestStatus } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
@@ -49,6 +58,8 @@ const getStatusBadgeClasses = (status: TestStatus) => {
 export default function Home() {
   const [runs, setRuns] = React.useState<TestRun[]>([]);
   const [isClearAlertOpen, setIsClearAlertOpen] = React.useState(false);
+  const [isRawJsonDialogOpen, setIsRawJsonDialogOpen] = React.useState(false);
+  const [rawJsonContent, setRawJsonContent] = React.useState("");
   const { toast } = useToast();
 
   const processJsonReport = React.useCallback((json: any) => {
@@ -252,6 +263,30 @@ export default function Home() {
     }
   };
 
+  const handleRawJsonImport = () => {
+    if (!rawJsonContent) {
+      toast({
+        variant: "destructive",
+        title: "Input Empty",
+        description: "Please paste your JSON report into the text area.",
+      });
+      return;
+    }
+    try {
+      const json = JSON.parse(rawJsonContent);
+      processJsonReport(json);
+      setIsRawJsonDialogOpen(false);
+      setRawJsonContent("");
+    } catch (error) {
+      console.error("Error parsing raw JSON:", error);
+      toast({
+        variant: "destructive",
+        title: "Invalid JSON",
+        description: "The content is not valid JSON. Please check for syntax errors.",
+      });
+    }
+  };
+
   const handleExport = () => {
     if (runs.length === 0) return;
     const jsonString = JSON.stringify(runs, null, 2);
@@ -293,6 +328,10 @@ export default function Home() {
           </h1>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <Button variant="outline" onClick={() => setIsRawJsonDialogOpen(true)}>
+            <FileJson className="mr-2 h-4 w-4" />
+            Import Raw JSON
+          </Button>
           <Button variant="outline" onClick={handlePaste}>
             <Clipboard className="mr-2 h-4 w-4" />
             Paste Report
@@ -313,12 +352,16 @@ export default function Home() {
               <FileText className="mx-auto h-16 w-16 text-muted-foreground" />
               <h3 className="mt-6 text-2xl font-semibold text-foreground">No test runs found</h3>
               <p className="mt-2 text-base text-muted-foreground">
-                Copy a Playwright JSON report and click the &quot;Paste Report&quot; button.
+                Paste a report from your clipboard or import raw JSON.
               </p>
-              <div className="mt-6">
+              <div className="mt-6 flex items-center gap-4">
                 <Button onClick={handlePaste}>
                   <Clipboard className="mr-2 h-4 w-4" />
                   Paste from Clipboard
+                </Button>
+                <Button variant="secondary" onClick={() => setIsRawJsonDialogOpen(true)}>
+                  <FileJson className="mr-2 h-4 w-4" />
+                  Import Raw JSON
                 </Button>
               </div>
             </div>
@@ -397,6 +440,30 @@ export default function Home() {
             </>
           )}
       </main>
+
+      <Dialog open={isRawJsonDialogOpen} onOpenChange={setIsRawJsonDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Import Raw JSON Report</DialogTitle>
+            <DialogDescription>
+              Paste the contents of your Playwright JSON report file into the text area below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Paste your JSON here..."
+              className="min-h-[40vh] font-mono text-xs"
+              value={rawJsonContent}
+              onChange={(e) => setRawJsonContent(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRawJsonDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleRawJsonImport}>Import Report</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={isClearAlertOpen} onOpenChange={setIsClearAlertOpen}>
         <AlertDialogContent>
             <AlertDialogHeader>
