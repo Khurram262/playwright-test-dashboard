@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { analyzeTestFailureLogs } from "@/ai/flows/analyze-test-failure-logs";
-import type { Test, TestRun, TestStatus } from "@/types";
+import type { Test, TestRun, TestStatus, TestAttachment } from "@/types";
 import { CheckCircle2, Clock, FileText, MinusCircle, Sparkles, XCircle, AlertCircle, Filter, SortAsc, SortDesc, Search, ChevronsRightLeft, Copy, ChevronsUpDown, HelpCircle, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -157,12 +157,21 @@ const getBadgeClasses = (status: TestStatus) => {
     }
 }
 
-type TestDetailsProps = {
-  run: TestRun;
-  flakyTestNames: Set<string>;
+const getSafeAttachmentPath = (attachment: TestAttachment) => {
+    const isLocalPath = !attachment.path.startsWith('http') && !attachment.path.startsWith('data:');
+    if (isLocalPath) {
+        // Return a transparent GIF as a placeholder for local file paths
+        return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    }
+    return attachment.path;
 }
 
-export function TestDetails({ run, flakyTestNames }: TestDetailsProps) {
+type TestDetailsProps = {
+  run: TestRun;
+  flakyTestNames?: Set<string>;
+}
+
+export function TestDetails({ run, flakyTestNames = new Set() }: TestDetailsProps) {
   const failedTestIds = run.tests.filter(t => t.status === 'failed').map(t => t.id);
 
   const [openItems, setOpenItems] = React.useState<string[]>(failedTestIds);
@@ -333,7 +342,7 @@ export function TestDetails({ run, flakyTestNames }: TestDetailsProps) {
                                 <div key={i} className="border rounded-lg overflow-hidden max-w-2xl shadow-sm">
                                     <p className="p-2 text-sm text-muted-foreground bg-secondary/50 font-medium">{att.description}</p>
                                     <div className="bg-muted">
-                                        <Image data-ai-hint="test screenshot" src={att.path} alt={att.description} width={1280} height={720} className="w-full h-auto" />
+                                        <Image data-ai-hint="test screenshot" src={getSafeAttachmentPath(att)} alt={att.description} width={1280} height={720} className="w-full h-auto" />
                                     </div>
                                 </div>
                                 ))}
@@ -359,5 +368,3 @@ export function TestDetails({ run, flakyTestNames }: TestDetailsProps) {
     </Card>
   );
 }
-
-    
