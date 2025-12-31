@@ -71,6 +71,7 @@ export default function Home() {
   const [rawJsonContent, setRawJsonContent] = React.useState("");
   const { toast } = useToast();
   const [toastToShow, setToastToShow] = React.useState<ToastInfo | null>(null);
+  const [canShowNotificationButton, setCanShowNotificationButton] = React.useState(false);
 
 
   const processJsonReport = React.useCallback((json: any) => {
@@ -187,9 +188,11 @@ export default function Home() {
       });
 
       // Check for failures and send notification
-      const hasFailures = filteredNewRuns.some(run => getTestRunSummary(run).failed > 0);
-      if (hasFailures) {
-          sendFailureNotification(filteredNewRuns);
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        const hasFailures = filteredNewRuns.some(run => getTestRunSummary(run).failed > 0);
+        if (hasFailures) {
+            sendFailureNotification(filteredNewRuns);
+        }
       }
 
       return updatedRuns;
@@ -220,6 +223,7 @@ export default function Home() {
                     title: "Notifications Enabled",
                     description: "You'll be alerted about new test failures.",
                 });
+                setCanShowNotificationButton(false);
             }
         });
     }
@@ -246,6 +250,10 @@ export default function Home() {
         console.error("Failed to parse test runs from localStorage", e);
         localStorage.removeItem('testRuns');
       }
+    }
+    // Check if we should show the notification button
+    if ('Notification' in window && Notification.permission !== 'granted') {
+        setCanShowNotificationButton(true);
     }
     // Request notification permission on load
     requestNotificationPermission();
@@ -365,7 +373,7 @@ export default function Home() {
           </h1>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          { Notification.permission !== 'granted' && (
+          { canShowNotificationButton && (
               <Button variant="outline" size="sm" onClick={requestNotificationPermission}>
                   <Bell className="mr-2 h-4 w-4" />
                   Enable Notifications
@@ -531,3 +539,4 @@ export default function Home() {
     
 
     
+
