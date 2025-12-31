@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Bar, BarChart, CartesianGrid, Label, RadialBar, RadialBarChart, XAxis, YAxis, Cell } from "recharts";
+import { Bar, BarChart, CartesianGrid, Label, RadialBar, RadialBarChart, XAxis, YAxis, Cell, Legend } from "recharts";
 import {
     Card,
     CardContent,
@@ -26,10 +26,6 @@ const chartConfig = {
     interrupted: { label: "Interrupted", color: "hsl(var(--chart-5))" },
 };
 
-type ReportSummaryChartProps = {
-    run: TestRun;
-};
-
 export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
     const summary = getTestRunSummary(run);
     const barChartData = [
@@ -41,13 +37,15 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
 
     const totalDuration = run.tests.reduce((acc, test) => acc + test.duration, 0);
     
-    const totalConsideredForPassRate = summary.passed + summary.failed;
-    const radialChartData = totalConsideredForPassRate > 0 ? [
-        { name: 'failed', value: summary.failed, fill: 'hsl(var(--chart-3))' },
-        { name: 'passed', value: summary.passed + summary.failed, fill: 'hsl(var(--chart-1))' },
-    ] : [
-        { name: 'passed', value: 100, fill: 'hsl(var(--chart-1))' }
+    const consideredForPassRate = summary.passed + summary.failed + summary.interrupted;
+    const radialChartData = [
+      { name: "passed", value: summary.passed, fill: "hsl(var(--chart-1))" },
+      { name: "failed", value: summary.failed, fill: "hsl(var(--chart-3))" },
+      { name: "skipped", value: summary.skipped, fill: "hsl(var(--chart-4))" },
+      { name: "interrupted", value: summary.interrupted, fill: "hsl(var(--chart-5))" },
     ];
+
+    const totalTestsInChart = radialChartData.reduce((acc, curr) => acc + curr.value, 0);
 
 
     return (
@@ -73,17 +71,31 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                     innerRadius="70%"
                                     outerRadius="100%"
                                     barSize={24}
+                                    stackOffset="expand"
                                 >
                                     <RadialBar
                                         background={{ fill: 'hsl(var(--secondary))' }}
                                         dataKey="value"
                                         cornerRadius={12}
+                                        stackId="a"
+                                    >
+                                        {radialChartData.map((entry, index) => (
+                                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        ))}
+                                    </RadialBar>
+                                     <Legend
+                                      iconSize={10}
+                                      width={120}
+                                      height={140}
+                                      layout="vertical"
+                                      verticalAlign="middle"
+                                      align="right"
+                                      content={() => null} // We render the label instead
                                     />
                                     <Label 
                                       content={({ viewBox }) => {
                                         if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                            const considered = summary.passed + summary.failed;
-                                            const percentage = considered > 0 ? (summary.passed / considered) * 100 : (summary.passed > 0 ? 100 : 0);
+                                            const percentage = consideredForPassRate > 0 ? (summary.passed / consideredForPassRate) * 100 : (summary.passed > 0 ? 100 : 0);
 
                                             return (
                                                 <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
@@ -194,3 +206,5 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
         </Card>
     );
 }
+
+    
