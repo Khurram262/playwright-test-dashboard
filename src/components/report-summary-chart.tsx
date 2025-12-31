@@ -41,6 +41,10 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
     const totalDuration = run.tests.reduce((acc, test) => acc + test.duration, 0);
     const passPercentage = summary.total > 0 ? (summary.passed / summary.total) * 100 : 0;
 
+    const radialChartData = [
+        { name: 'passed', value: passPercentage, fill: 'hsl(var(--primary))' },
+    ];
+
     return (
         <Card className="print-break-inside-avoid">
             <CardHeader>
@@ -58,7 +62,7 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                 className="mx-auto aspect-square w-full max-w-[250px]"
                             >
                                 <RadialBarChart
-                                    data={[{ name: "passed", value: passPercentage, fill: "var(--color-passed)" }]}
+                                    data={radialChartData}
                                     startAngle={90}
                                     endAngle={-270}
                                     innerRadius="70%"
@@ -69,7 +73,6 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                         background={{ fill: 'hsl(var(--secondary))' }}
                                         dataKey="value"
                                         cornerRadius={12}
-                                        className="fill-primary"
                                     />
                                     <Label 
                                       content={({ viewBox }) => {
