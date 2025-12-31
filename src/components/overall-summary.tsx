@@ -11,7 +11,6 @@ import {
   XAxis,
   YAxis,
   Cell,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import {
@@ -25,6 +24,8 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
 } from '@/components/ui/chart';
 import type { TestRun } from '@/types';
 import { getTestRunSummary } from '@/lib/utils';
@@ -141,28 +142,31 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
                 <CardTitle>Overall Test Status</CardTitle>
                 <CardDescription>Aggregated results from all {overallSummary.totalRuns} runs.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig} className="h-[250px] w-full">
+            <CardContent className="flex items-center justify-center">
+                <ChartContainer config={chartConfig} className="h-[250px] w-full max-w-[250px]">
                    <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                        <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent hideLabel />}
-                        />
-                        <Pie
-                            data={pieChartData}
-                            dataKey="value"
-                            nameKey="name"
-                            innerRadius={60}
-                            outerRadius={100}
-                            paddingAngle={5}
-                            labelLine={false}
-                        >
-                             {pieChartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                        </Pie>
-                        <Legend />
+                            <ChartTooltip
+                                cursor={false}
+                                content={<ChartTooltipContent hideLabel />}
+                            />
+                            <Pie
+                                data={pieChartData}
+                                dataKey="value"
+                                nameKey="name"
+                                innerRadius="65%"
+                                outerRadius="90%"
+                                strokeWidth={5}
+                            >
+                                <Cell name="Passed" fill="var(--color-passed)" />
+                                <Cell name="Failed" fill="var(--color-failed)" />
+                                <Cell name="Skipped" fill="var(--color-skipped)" />
+                                <Cell name="Interrupted" fill="var(--color-interrupted)" />
+                            </Pie>
+                             <ChartLegend
+                                content={<ChartLegendContent nameKey="name" />}
+                                className="-translate-y-[10px] [&_button]:w-auto"
+                            />
                         </PieChart>
                     </ResponsiveContainer>
                 </ChartContainer>
