@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import Link from "next/link";
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -34,7 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, FileJson, Play, Bell } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, FileJson, Play, Bell, GitMerge } from "lucide-react";
 import type { TestRun, Test, TestStatus, TestAttachment } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
@@ -216,7 +217,7 @@ export default function Home() {
   }
 
   const requestNotificationPermission = () => {
-    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission().then(permission => {
             if (permission === 'granted') {
                 toast({
@@ -252,11 +253,9 @@ export default function Home() {
       }
     }
     // Check if we should show the notification button
-    if ('Notification' in window && Notification.permission !== 'granted') {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
         setCanShowNotificationButton(true);
     }
-    // Request notification permission on load
-    requestNotificationPermission();
   }, []);
 
   React.useEffect(() => {
@@ -402,22 +401,52 @@ export default function Home() {
       </header>
       <main className="p-4 sm:p-6 space-y-6">
         {sortedRuns.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-12 text-center mt-8">
-              <FileText className="mx-auto h-16 w-16 text-muted-foreground" />
-              <h3 className="mt-6 text-2xl font-semibold text-foreground">No test runs found</h3>
-              <p className="mt-2 text-base text-muted-foreground">
-                Paste a report from your clipboard or import raw JSON.
-              </p>
-              <div className="mt-6 flex items-center gap-4">
-                <Button onClick={handlePaste}>
-                  <Clipboard className="mr-2 h-4 w-4" />
-                  Paste from Clipboard
-                </Button>
-                <Button variant="secondary" onClick={() => setIsRawJsonDialogOpen(true)}>
-                  <FileJson className="mr-2 h-4 w-4" />
-                  Import Raw JSON
-                </Button>
+            <div className="space-y-8">
+              <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-12 text-center">
+                <FileText className="mx-auto h-16 w-16 text-muted-foreground" />
+                <h3 className="mt-6 text-2xl font-semibold text-foreground">No test runs found</h3>
+                <p className="mt-2 text-base text-muted-foreground">
+                  Get started by manually importing a report or automating it with CI/CD.
+                </p>
+                <div className="mt-6 flex items-center gap-4">
+                  <Button onClick={handlePaste}>
+                    <Clipboard className="mr-2 h-4 w-4" />
+                    Paste from Clipboard
+                  </Button>
+                  <Button variant="secondary" onClick={() => setIsRawJsonDialogOpen(true)}>
+                    <FileJson className="mr-2 h-4 w-4" />
+                    Import Raw JSON
+                  </Button>
+                </div>
               </div>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                        <GitMerge className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                        <CardTitle>Automate with CI/CD</CardTitle>
+                        <CardDescription>Integrate the dashboard into your development workflow.</CardDescription>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm text-muted-foreground">
+                    <p>
+                        This dashboard is designed to automatically display the latest test results from your CI/CD pipeline.
+                        Configure your pipeline to output the Playwright JSON reporter to the `public/report.json` file.
+                    </p>
+                    <div className="space-y-2">
+                        <p className="font-medium text-foreground">Example Command:</p>
+                        <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto">
+                            <code>npx playwright test --reporter=json,line &gt; public/report.json</code>
+                        </pre>
+                    </div>
+                     <p>
+                        Your CI pipeline will run the tests, generate the report, and this dashboard will automatically pick it up on the next page load.
+                    </p>
+                </CardContent>
+              </Card>
+
             </div>
           ) : (
             <>
@@ -540,3 +569,6 @@ export default function Home() {
 
     
 
+
+
+    
