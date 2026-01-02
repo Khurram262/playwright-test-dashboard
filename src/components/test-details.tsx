@@ -49,27 +49,32 @@ const StatusIcon = ({ status, className }: { status: Test['status'], className?:
 
 const CreateIssueDialog = ({ test, isOpen, onOpenChange }: { test: Test, isOpen: boolean, onOpenChange: (open: boolean) => void}) => {
     const { toast } = useToast();
+    const [tracker, setTracker] = React.useState("github");
     const [title, setTitle] = React.useState(`Test Failed: ${test.name}`);
     const [body, setBody] = React.useState(
-`**Test:** ${test.name}
-**File:** ${test.description.replace('Location: ', '')}
-**Error:** 
+`**Test:** \`${test.name}\`
+**File:** \`${test.description.replace('Location: ', '')}\`
+
+### Error
 \`\`\`
-${test.error}
+${test.error || 'No error message provided.'}
 \`\`\`
-**Full Log:**
+
+### Full Error Log
 \`\`\`
-${test.errorLog}
+${test.errorLog || 'No error log available.'}
 \`\`\`
 `
     );
 
     const handleCreateIssue = () => {
         // Placeholder for actual issue creation logic
-        console.log("Creating issue...", { title, body });
+        console.log("Simulating issue creation for:", tracker);
+        console.log("Payload:", { title, body });
+
         toast({
             title: "Issue Creation Simulated",
-            description: "Check the console for the issue payload.",
+            description: `Check the browser console for the '${tracker}' issue payload.`,
         });
         onOpenChange(false);
     }
@@ -80,19 +85,20 @@ ${test.errorLog}
                 <DialogHeader>
                     <DialogTitle>Create New Issue</DialogTitle>
                     <DialogDescription>
-                        Create an issue in your preferred tracker. This is currently a demonstration.
+                        This form is pre-filled with the test failure details. You can copy this content into your issue tracker.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="issue-tracker">Issue Tracker</Label>
-                         <Select defaultValue="github">
+                         <Select value={tracker} onValueChange={setTracker}>
                             <SelectTrigger id="issue-tracker">
                                 <SelectValue placeholder="Select a tracker" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="github">GitHub</SelectItem>
-                                <SelectItem value="jira" disabled>Jira (coming soon)</SelectItem>
+                                <SelectItem value="jira">Jira</SelectItem>
+                                <SelectItem value="clickup">ClickUp</SelectItem>
                                 <SelectItem value="linear" disabled>Linear (coming soon)</SelectItem>
                             </SelectContent>
                         </Select>
@@ -102,13 +108,13 @@ ${test.errorLog}
                         <Input id="issue-title" value={title} onChange={(e) => setTitle(e.target.value)} />
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="issue-body">Body</Label>
+                        <Label htmlFor="issue-body">Body (Markdown)</Label>
                         <Textarea id="issue-body" value={body} onChange={(e) => setBody(e.target.value)} className="min-h-[250px] font-mono text-xs" />
                     </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleCreateIssue}>Create Issue</Button>
+                    <Button onClick={handleCreateIssue}>Simulate Issue Creation</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
