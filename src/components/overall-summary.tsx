@@ -36,6 +36,7 @@ const chartConfig = {
   failed: { label: 'Failed', color: 'hsl(var(--chart-3))' },
   skipped: { label: 'Skipped', color: 'hsl(var(--chart-4))' },
   interrupted: { label: 'Interrupted', color: 'hsl(var(--chart-5))' },
+  total: { label: 'Total', color: 'hsl(var(--primary))' },
 };
 
 const PIE_COLORS = {
@@ -85,11 +86,15 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
     { name: 'Interrupted', value: overallSummary.interrupted, fill: PIE_COLORS.interrupted },
   ].filter(d => d.value > 0);
 
-  const barChartData = runs.map(run => ({
-    runId: run.runId.substring(0, 12) + '...',
-    date: new Date(run.executionDate),
-    total: run.tests.length,
-  })).slice(0, 15).reverse(); // Show last 15 runs
+  const historicalData = React.useMemo(() => {
+     return runs.map(run => {
+        const summary = getTestRunSummary(run);
+        return {
+            date: new Date(run.executionDate),
+            ...summary
+        }
+     }).slice(0, 15).reverse();
+  }, [runs]);
 
 
   return (
@@ -137,12 +142,12 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
             </CardContent>
         </Card>
 
-        <Card className="sm:col-span-2 lg:col-span-2">
+        <Card className="col-span-full lg:col-span-2">
             <CardHeader>
                 <CardTitle>Overall Test Status</CardTitle>
                 <CardDescription>Aggregated results from all {overallSummary.totalRuns} runs.</CardDescription>
             </CardHeader>
-            <CardContent className="flex items-center justify-center">
+            <CardContent className="flex items-center justify-center pt-4">
                 <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
                    <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -170,26 +175,17 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
                 </ChartContainer>
             </CardContent>
         </Card>
-
-        <Card className="sm:col-span-2 lg:col-span-2">
+        
+        <Card className="col-span-full lg:col-span-2">
             <CardHeader>
-                <CardTitle>Tests Per Run</CardTitle>
-                <CardDescription>Total number of tests in the last {barChartData.length} runs.</CardDescription>
+                <CardTitle>Historical Trend</CardTitle>
+                <CardDescription>Test statuses for the last {historicalData.length} runs.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                     <BarChart 
-                        data={barChartData} 
-                        margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
-                     >
-                        <defs>
-                            <linearGradient id="fillTotal" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                        <XAxis
+                    <BarChart accessibilityLayer data={historicalData}>
+                         <CartesianGrid vertical={false} />
+                         <XAxis
                             dataKey="date"
                             tickLine={false}
                             axisLine={false}
@@ -203,33 +199,15 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
                             tickMargin={8}
                             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
                         />
-                        <ChartTooltip 
+                        <ChartTooltip
                             cursor={false}
-                            content={({ active, payload, label }) => {
-                                if (active && payload && payload.length) {
-                                    return (
-                                        <div className="bg-background/95 p-2 shadow-lg border rounded-lg text-sm">
-                                            <p className="font-bold">{`${payload[0].value} tests`}</p>
-                                            <p className="text-muted-foreground">
-                                                {new Date(label).toLocaleString(undefined, {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    hour: 'numeric',
-                                                    minute: '2-digit'
-                                                })}
-                                            </p>
-                                        </div>
-                                    )
-                                }
-                                return null;
-                            }}
+                            content={<ChartTooltipContent indicator="dot" />}
                         />
-                        <Bar 
-                            dataKey="total" 
-                            fill="url(#fillTotal)"
-                            radius={[4, 4, 0, 0]} 
-                        />
+                        <ChartLegend content={<ChartLegendContent />} />
+                        <Bar dataKey="passed" stackId="a" fill="var(--color-passed)" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="failed" stackId="a" fill="var(--color-failed)" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="skipped" stackId="a" fill="var(--color-skipped)" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="interrupted" stackId="a" fill="var(--color-interrupted)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ChartContainer>
             </CardContent>
@@ -237,5 +215,3 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
     </div>
   );
 }
-
-    
