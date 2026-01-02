@@ -385,7 +385,7 @@ export function TestDetails({ run, flakyTestNames = new Set() }: TestDetailsProp
                     <Tabs defaultValue="details">
                         <TabsList className="mb-4">
                             <TabsTrigger value="details">Details</TabsTrigger>
-                            {(test.status === 'failed' || test.status === 'interrupted') && <TabsTrigger value="analysis">Analysis & Actions</TabsTrigger>}
+                            {(test.status === 'failed' || test.status === 'interrupted') && <TabsTrigger value="analysis">Analysis &amp; Actions</TabsTrigger>}
                             {test.attachments && test.attachments.length > 0 && <TabsTrigger value="attachments">Attachments</TabsTrigger>}
                         </TabsList>
 
