@@ -16,7 +16,7 @@ export const getTestRunSummary = (run: TestRun) => {
   };
   for (const test of run.tests) {
     if (test.status === "passed") summary.passed++;
-    else if (test.status === "failed") summary.failed++;
+    else if (test.status === "failed" || test.status === "timedOut") summary.failed++;
     else if (test.status === "skipped") summary.skipped++;
     else if (test.status === "interrupted") summary.interrupted++;
   }

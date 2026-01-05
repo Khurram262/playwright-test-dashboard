@@ -1,8 +1,7 @@
-
 "use client";
 
 import * as React from "react";
-import { Bar, BarChart, CartesianGrid, Label, RadialBar, RadialBarChart, XAxis, YAxis, Cell, Legend } from "recharts";
+import { Bar, BarChart, CartesianGrid, Label, Pie, PieChart, XAxis, YAxis, Cell, Legend } from "recharts";
 import {
     Card,
     CardContent,
@@ -14,6 +13,8 @@ import {
     ChartContainer,
     ChartTooltip,
     ChartTooltipContent,
+    ChartLegend,
+    ChartLegendContent,
 } from "@/components/ui/chart";
 import { getTestRunSummary } from "@/lib/utils";
 import type { TestRun } from "@/types";
@@ -26,6 +27,10 @@ const chartConfig = {
     interrupted: { label: "Interrupted", color: "hsl(var(--chart-5))" },
 };
 
+type ReportSummaryChartProps = {
+    run: TestRun;
+};
+
 export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
     const summary = getTestRunSummary(run);
     const barChartData = [
@@ -36,13 +41,13 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
     ];
 
     const totalDuration = run.tests.reduce((acc, test) => acc + test.duration, 0);
-    
+
     const consideredForPassRate = summary.passed + summary.failed + summary.interrupted;
     const radialChartData = [
-      { name: "passed", value: summary.passed, fill: "hsl(var(--chart-1))" },
-      { name: "failed", value: summary.failed, fill: "hsl(var(--chart-3))" },
-      { name: "skipped", value: summary.skipped, fill: "hsl(var(--chart-4))" },
-      { name: "interrupted", value: summary.interrupted, fill: "hsl(var(--chart-5))" },
+        { name: "passed", value: summary.passed, fill: "hsl(var(--chart-1))" },
+        { name: "failed", value: summary.failed, fill: "hsl(var(--chart-3))" },
+        { name: "skipped", value: summary.skipped, fill: "hsl(var(--chart-4))" },
+        { name: "interrupted", value: summary.interrupted, fill: "hsl(var(--chart-5))" },
     ];
 
     const totalTestsInChart = radialChartData.reduce((acc, curr) => acc + curr.value, 0);
@@ -60,65 +65,57 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                     <div className="md:col-span-2 flex flex-col gap-6">
                         <Card className="flex flex-col items-center justify-center p-4 h-full">
-                           <ChartContainer
+                            <ChartContainer
                                 config={chartConfig}
                                 className="mx-auto aspect-square w-full max-w-[250px]"
                             >
-                                <RadialBarChart
-                                    data={radialChartData}
-                                    startAngle={90}
-                                    endAngle={-270}
-                                    innerRadius="70%"
-                                    outerRadius="100%"
-                                    barSize={24}
-                                    stackOffset="expand"
-                                >
-                                    <RadialBar
-                                        background={{ fill: 'hsl(var(--secondary))' }}
+                                <PieChart>
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent hideLabel />}
+                                    />
+                                    <Pie
+                                        data={radialChartData}
                                         dataKey="value"
-                                        cornerRadius={12}
-                                        stackId="a"
+                                        nameKey="name"
+                                        innerRadius="60%"
+                                        strokeWidth={5}
                                     >
-                                        {radialChartData.map((entry, index) => (
-                                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                                        ))}
-                                    </RadialBar>
-                                     <Legend
-                                      iconSize={10}
-                                      width={120}
-                                      height={140}
-                                      layout="vertical"
-                                      verticalAlign="middle"
-                                      align="right"
-                                      content={() => null} // We render the label instead
-                                    />
-                                    <Label 
-                                      content={({ viewBox }) => {
-                                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                            const percentage = consideredForPassRate > 0 ? (summary.passed / consideredForPassRate) * 100 : (summary.passed > 0 ? 100 : 0);
+                                        <Label
+                                            content={({ viewBox }) => {
+                                                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                                    const percentage = consideredForPassRate > 0 ? (summary.passed / consideredForPassRate) * 100 : (summary.passed > 0 ? 100 : 0);
 
-                                            return (
-                                                <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
-                                                    <tspan
-                                                        x={viewBox.cx}
-                                                        y={(viewBox.cy || 0) - 10}
-                                                        className="fill-foreground text-4xl font-bold"
-                                                    >
-                                                        {percentage.toFixed(0)}%
-                                                    </tspan>
-                                                     <tspan
-                                                        x={viewBox.cx}
-                                                        y={(viewBox.cy || 0) + 15}
-                                                        className="fill-muted-foreground text-base"
-                                                    >
-                                                        Passed
-                                                    </tspan>
-                                                </text>
-                                            )
-                                        }
-                                      }}
+                                                    return (
+                                                        <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                                                            <tspan
+                                                                x={viewBox.cx}
+                                                                y={viewBox.cy}
+                                                                className="fill-foreground text-3xl font-bold"
+                                                            >
+                                                                {percentage.toFixed(0)}%
+                                                            </tspan>
+                                                            <tspan
+                                                                x={viewBox.cx}
+                                                                y={(viewBox.cy || 0) + 24}
+                                                                className="fill-muted-foreground text-xs"
+                                                            >
+                                                                Passed
+                                                            </tspan>
+                                                        </text>
+                                                    )
+                                                }
+                                            }}
+                                        />
+                                        {radialChartData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                    <ChartLegend
+                                        content={<ChartLegendContent nameKey="name" />}
+                                        className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
                                     />
-                                </RadialBarChart>
+                                </PieChart>
                             </ChartContainer>
                         </Card>
                         <Card>
@@ -134,12 +131,12 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
 
                     <div className="md:col-span-3 flex flex-col">
                         <Card className="flex-1">
-                             <CardHeader>
+                            <CardHeader>
                                 <CardTitle>Test Breakdown</CardTitle>
                                 <CardDescription>A summary of test results by status.</CardDescription>
                             </CardHeader>
                             <CardContent className="pl-2">
-                                 <ChartContainer config={chartConfig} className="h-[200px] w-full">
+                                <ChartContainer config={chartConfig} className="h-[200px] w-full">
                                     <BarChart
                                         accessibilityLayer
                                         data={barChartData}
@@ -147,22 +144,22 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                         margin={{ left: 10, top: 0, right: 10, bottom: 0 }}
                                     >
                                         <CartesianGrid horizontal={false} />
-                                        <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} />
+                                        <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
                                         <XAxis type="number" hide />
                                         <ChartTooltip
                                             cursor={{ fill: "hsl(var(--accent))" }}
                                             content={<ChartTooltipContent />}
                                         />
                                         <Bar dataKey="value" layout="vertical" radius={5} barSize={32}>
-                                           {barChartData.map((entry, index) => (
-                                             <Cell key={`cell-${index}`} fill={entry.fill} />
-                                           ))}
+                                            {barChartData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                                            ))}
                                         </Bar>
                                     </BarChart>
                                 </ChartContainer>
                             </CardContent>
                         </Card>
-                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Passed</CardTitle>
@@ -190,7 +187,7 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
                                     <div className="text-2xl font-bold">{summary.skipped}</div>
                                 </CardContent>
                             </Card>
-                             <Card>
+                            <Card>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Interrupted</CardTitle>
                                     <AlertCircle className="h-4 w-4 text-gray-500" />
@@ -206,5 +203,3 @@ export function ReportSummaryChart({ run }: ReportSummaryChartProps) {
         </Card>
     );
 }
-
-    
