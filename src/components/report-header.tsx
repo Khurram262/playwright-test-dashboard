@@ -12,7 +12,7 @@ type ReportHeaderProps = {
 
 export function ReportHeader({ run }: ReportHeaderProps) {
   const { toast } = useToast();
-  
+
   const handleJsonExport = () => {
     const jsonString = JSON.stringify(run, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
@@ -37,7 +37,7 @@ export function ReportHeader({ run }: ReportHeaderProps) {
           <div className="flex items-center gap-4">
             <Button asChild variant="outline" size="sm">
               <Link href="/">
-                <ArrowLeft className="mr-2 h-4 w-4"/>
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 All Runs
               </Link>
             </Button>

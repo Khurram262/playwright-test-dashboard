@@ -35,12 +35,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, Play, Bell, GitMerge } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, Play, Bell, GitMerge, Monitor, EyeOff } from "lucide-react";
 import type { TestRun, Test, TestStatus, TestAttachment } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
 import { OverallSummary } from "@/components/overall-summary";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { LiveTestView } from "@/components/live-test-view";
 
 type ToastInfo = {
   title: string;
@@ -52,13 +53,13 @@ type ToastInfo = {
 const getStatusBadgeClasses = (status: TestStatus) => {
   switch (status) {
     case 'passed':
-      return 'border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400';
+      return 'border-green-500/60 bg-green-500/15 text-green-700 dark:border-green-400/50 dark:bg-green-400/10 dark:text-green-300 shadow-sm dark:shadow-green-500/10';
     case 'failed':
-      return 'border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-400';
+      return 'border-red-500/60 bg-red-500/15 text-red-700 dark:border-red-400/50 dark:bg-red-400/10 dark:text-red-300 shadow-sm dark:shadow-red-500/10';
     case 'skipped':
-      return 'border-yellow-500/50 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
+      return 'border-yellow-500/60 bg-yellow-500/15 text-yellow-700 dark:border-yellow-400/50 dark:bg-yellow-400/10 dark:text-yellow-300 shadow-sm dark:shadow-yellow-500/10';
     case 'interrupted':
-      return 'border-gray-500/50 bg-gray-500/10 text-gray-700 dark:text-gray-400';
+      return 'border-gray-500/60 bg-gray-500/15 text-gray-700 dark:border-gray-400/50 dark:bg-gray-400/10 dark:text-gray-300 shadow-sm dark:shadow-gray-500/10';
     default:
       return '';
   }
@@ -75,6 +76,7 @@ export default function Home() {
   const { toast } = useToast();
   const [toastToShow, setToastToShow] = React.useState<ToastInfo | null>(null);
   const [canShowNotificationButton, setCanShowNotificationButton] = React.useState(false);
+  const [showLiveTests, setShowLiveTests] = React.useState(true);
 
   const processJsonReport = React.useCallback((json: any, silent: boolean = false) => {
     const processAttachments = (attachments: any[]): TestAttachment[] => {
@@ -379,88 +381,163 @@ export default function Home() {
   }, [totalPages, currentPage]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-xl sm:px-6">
-        <div className="flex items-center gap-3">
-          <Logo className="h-8 w-8 text-primary" />
-          <h1 className="text-xl font-bold text-foreground">
-            Playwright Report Dashboard
-          </h1>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          {canShowNotificationButton && (
-            <Button variant="outline" size="sm" onClick={requestNotificationPermission}>
-              <Bell className="mr-2 h-4 w-4" />
-              Enable Notifications
-            </Button>
-          )}
-          <ThemeSwitcher />
-          <div className="hidden sm:flex items-center gap-2">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/60 shadow-sm">
+        <div className="flex h-16 items-center gap-4 px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Logo className="h-9 w-9 text-primary drop-shadow-lg" />
+              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full -z-10"></div>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                Playwright Report Dashboard
+              </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">Real-time Test Monitoring</p>
+            </div>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            {canShowNotificationButton && (
+              <Button variant="outline" size="sm" onClick={requestNotificationPermission}>
+                <Bell className="mr-2 h-4 w-4" />
+                Enable Notifications
+              </Button>
+            )}
+            {runs.length > 0 && (
+              <Button
+                variant={showLiveTests ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowLiveTests(!showLiveTests)}
+              >
+                {showLiveTests ? (
+                  <>
+                    <EyeOff className="mr-2 h-4 w-4" />
+                    Hide Live Tests
+                  </>
+                ) : (
+                  <>
+                    <Monitor className="mr-2 h-4 w-4" />
+                    Show Live Tests
+                  </>
+                )}
+              </Button>
+            )}
+            <ThemeSwitcher />
+            <div className="hidden sm:flex items-center gap-2">
 
 
-            <Button onClick={handleRunAll} disabled={isRunning} variant="default" className="bg-green-600 hover:bg-green-700 text-white">
-              <Play className="mr-2 h-4 w-4" />
-              Run All Tests
-            </Button>
-            <Button onClick={handleStopRun} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-              Stop Tests
-            </Button>
-            <Button onClick={handleExport} variant="outline" disabled={runs.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
+              <Button
+                onClick={handleRunAll}
+                disabled={isRunning}
+                variant="default"
+                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg shadow-green-500/20 disabled:opacity-50"
+              >
+                <Play className="mr-2 h-4 w-4" />
+                Run All Tests
+              </Button>
+              <Button
+                onClick={handleStopRun}
+                variant="outline"
+                className="text-red-600 border-red-300 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950/30 dark:text-red-400"
+              >
+                Stop Tests
+              </Button>
+              <Button
+                onClick={handleExport}
+                variant="outline"
+                disabled={runs.length === 0}
+                className="border-primary/30 hover:border-primary/50 hover:bg-primary/5"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </div>
           </div>
         </div>
       </header>
       <main className="p-4 sm:p-6 space-y-6">
         {sortedRuns.length === 0 ? (
           <div className="space-y-8">
-            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-12 text-center">
-              <FileText className="mx-auto h-16 w-16 text-muted-foreground" />
-              <h3 className="mt-6 text-2xl font-semibold text-foreground">No test runs found</h3>
-              <p className="mt-2 text-base text-muted-foreground">
-                Get started by manually importing a report or automating it with CI/CD.
-              </p>
-              <div className="mt-6 flex items-center gap-4">
-
-
+            {/* Modern Empty State */}
+            <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-muted/30 p-16 text-center shadow-lg">
+              <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+              <div className="relative">
+                <div className="mx-auto mb-6 w-fit rounded-full bg-gradient-to-br from-primary/20 to-primary/5 p-6 shadow-inner">
+                  <FileText className="h-16 w-16 text-primary drop-shadow-lg animate-pulse" />
+                </div>
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+                  No test runs found
+                </h3>
+                <p className="mt-3 text-base text-muted-foreground max-w-md mx-auto">
+                  Get started by running tests or automating with CI/CD integration
+                </p>
+                <div className="mt-8 flex items-center justify-center gap-4">
+                  <Button
+                    onClick={handleRunAll}
+                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20"
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    Run All Tests
+                  </Button>
+                </div>
               </div>
             </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <GitMerge className="h-6 w-6 text-primary" />
+            {/* Modern CI/CD Card */}
+            <Card className="overflow-hidden border-border/50 shadow-xl">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none"></div>
+              <CardHeader className="relative flex flex-row items-center gap-4 border-b border-border/30 bg-gradient-to-r from-muted/50 to-transparent">
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 shadow-lg shadow-primary/30">
+                  <GitMerge className="h-7 w-7 text-white" />
+                  <div className="absolute inset-0 bg-white/20 rounded-xl animate-pulse"></div>
                 </div>
                 <div>
-                  <CardTitle>Automate with CI/CD</CardTitle>
-                  <CardDescription>Integrate the dashboard into your development workflow.</CardDescription>
+                  <CardTitle className="text-xl bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                    Automate with CI/CD
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground/80">
+                    Integrate seamlessly into your development workflow
+                  </CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <p>
-                  This dashboard is designed to automatically display the latest test results from your CI/CD pipeline.
-                  Configure your pipeline to output the Playwright JSON reporter to the `public/report.json` file.
+              <CardContent className="relative space-y-5 pt-6 text-sm">
+                <p className="text-muted-foreground leading-relaxed">
+                  This dashboard automatically displays the latest test results from your CI/CD pipeline.
+                  Configure your pipeline to output the Playwright JSON reporter.
                 </p>
-                <div className="space-y-2">
-                  <p className="font-medium text-foreground">Example Command:</p>
-                  <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto">
-                    <code>npx playwright test --reporter=json,line &gt; public/report.json</code>
-                  </pre>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
+                    <p className="font-semibold text-foreground">Example Command:</p>
+                  </div>
+                  <div className="relative rounded-lg border border-border/50 bg-muted/50 p-4 backdrop-blur-sm">
+                    <pre className="text-xs overflow-x-auto">
+                      <code className="text-foreground/90 font-mono">npx playwright test --reporter=json,line &gt; public/report.json</code>
+                    </pre>
+                    <div className="absolute top-2 right-2">
+                      <div className="rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                        CLI
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p>
-                  Your CI pipeline will run the tests, generate the report, and this dashboard will automatically pick it up on the next page load.
-                </p>
+                <div className="rounded-lg border border-green-200 dark:border-green-900/30 bg-green-50/50 dark:bg-green-950/20 p-4">
+                  <p className="text-sm text-green-800 dark:text-green-300 flex items-start gap-2">
+                    <span className="text-green-600 dark:text-green-400 text-lg">✓</span>
+                    <span>Your CI pipeline will run tests, generate the report, and this dashboard will automatically pick it up on the next load.</span>
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
           </div>
         ) : (
           <>
+            {showLiveTests && <LiveTestView />}
             <OverallSummary runs={sortedRuns} flakyTestsCount={flakyTestNames.size} />
-            <Card>
-              <CardHeader>
-                <CardTitle>All Test Runs</CardTitle>
+            <Card className="dark:border-border/50 dark:bg-card/50 dark:shadow-xl">
+              <CardHeader className="dark:border-b dark:border-border/40">
+                <CardTitle className="dark:text-foreground/90">All Test Runs</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
@@ -482,12 +559,15 @@ export default function Home() {
                       const summary = getTestRunSummary(run);
                       const flakyInRun = run.tests.filter(t => flakyTestNames.has(t.name)).length;
                       return (
-                        <TableRow key={run.runId}>
-                          <TableCell className="font-medium font-mono text-sm">{run.runId.substring(0, 15)}...</TableCell>
-                          <TableCell className="hidden md:table-cell text-muted-foreground">
+                        <TableRow
+                          key={run.runId}
+                          className="hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors border-b dark:border-border/40"
+                        >
+                          <TableCell className="font-medium font-mono text-sm dark:text-foreground/90">{run.runId.substring(0, 15)}...</TableCell>
+                          <TableCell className="hidden md:table-cell text-muted-foreground dark:text-muted-foreground/80">
                             {new Date(run.executionDate).toLocaleString()}
                           </TableCell>
-                          <TableCell>{summary.total}</TableCell>
+                          <TableCell className="dark:text-foreground/90">{summary.total}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={cn(getStatusBadgeClasses('passed'), summary.passed > 0 && 'font-semibold')}>
                               {summary.passed}
@@ -509,12 +589,12 @@ export default function Home() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={cn('border-orange-500/50 bg-orange-500/10 text-orange-700 dark:text-orange-400', flakyInRun > 0 && 'font-semibold')}>
+                            <Badge variant="outline" className={cn('border-orange-500/60 bg-orange-500/15 text-orange-700 dark:border-orange-400/50 dark:bg-orange-400/10 dark:text-orange-300 shadow-sm dark:shadow-orange-500/10', flakyInRun > 0 && 'font-semibold')}>
                               {flakyInRun}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button asChild variant="ghost" size="sm">
+                            <Button asChild variant="ghost" size="sm" className="hover:bg-primary/10 dark:hover:bg-primary/20">
                               <Link href={`/run/${run.runId}`}>
                                 View Report <ArrowRight className="ml-2 h-4 w-4" />
                               </Link>
@@ -528,9 +608,9 @@ export default function Home() {
 
                 {/* Pagination Controls */}
                 {totalPages >= 1 && (
-                  <div className="flex items-center justify-end space-x-4 p-4 border-t">
+                  <div className="flex items-center justify-end space-x-4 p-4 border-t dark:border-border/40 dark:bg-muted/20">
                     <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium text-muted-foreground">Rows per page</p>
+                      <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground/80">Rows per page</p>
                       <Select
                         value={itemsPerPage.toString()}
                         onValueChange={(value) => {
@@ -538,7 +618,7 @@ export default function Home() {
                           setCurrentPage(1);
                         }}
                       >
-                        <SelectTrigger className="h-8 w-[70px]">
+                        <SelectTrigger className="h-8 w-[70px] dark:border-border/50 dark:bg-background/50">
                           <SelectValue placeholder={itemsPerPage.toString()} />
                         </SelectTrigger>
                         <SelectContent side="top">
@@ -557,10 +637,11 @@ export default function Home() {
                         size="sm"
                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
+                        className="dark:border-border/50 dark:hover:bg-primary/20"
                       >
                         Previous
                       </Button>
-                      <div className="text-sm font-medium text-muted-foreground">
+                      <div className="text-sm font-medium text-muted-foreground dark:text-muted-foreground/80">
                         Page {currentPage} of {totalPages}
                       </div>
                       <Button
@@ -568,6 +649,7 @@ export default function Home() {
                         size="sm"
                         onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
+                        className="dark:border-border/50 dark:hover:bg-primary/20"
                       >
                         Next
                       </Button>
