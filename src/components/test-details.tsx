@@ -122,12 +122,30 @@ ${test.errorLog || 'No error log available.'}
   )
 }
 
-const AnalyzeLogButton = ({ test }: { test: Test }) => {
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3001';
+
+const TestActions = ({
+  test,
+  onRerun,
+  isRerunning,
+  onCopyLog,
+  onCopyCommand
+}: {
+  test: Test,
+  onRerun: (file: string, title: string, id: string) => Promise<void>,
+  isRerunning: boolean,
+  onCopyLog: (log: string) => void,
+  onCopyCommand: () => void
+}) => {
   const [isAnalysisOpen, setIsAnalysisOpen] = React.useState(false);
   const [isIssueOpen, setIsIssueOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [analysis, setAnalysis] = React.useState<string | null>(null);
   const { toast } = useToast();
+
+  const stripAnsi = (str: string) => {
+    return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+  };
 
   const handleAnalysis = async () => {
     setIsAnalysisOpen(true);
@@ -150,30 +168,21 @@ const AnalyzeLogButton = ({ test }: { test: Test }) => {
     }
   };
 
-  const handleCopyLog = () => {
-    if (!test.errorLog) return;
-    navigator.clipboard.writeText(test.errorLog);
-    toast({
-      title: "Copied to Clipboard",
-      description: "The error log has been copied.",
-    })
-  }
-
-  const handleCopyCommand = () => {
-    const location = test.description.replace('Location: ', '');
-    const command = `npx playwright test ${location}`;
-    navigator.clipboard.writeText(command);
-    toast({
-      title: "Command Copied",
-      description: "The run command has been copied to your clipboard.",
-    });
-  }
-
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" onClick={handleCopyCommand} variant="outline">
+        <Button
+          size="sm"
+          onClick={() => onRerun(test.description.replace('Location: ', '').split(':')[0], test.name, test.id)}
+          disabled={isRerunning}
+          variant="default"
+          className="bg-green-600 hover:bg-green-700 text-white"
+        >
           <Play className="mr-2 h-4 w-4" />
+          {isRerunning ? "Running..." : "Rerun Test"}
+        </Button>
+        <Button size="sm" onClick={onCopyCommand} variant="outline">
+          <Copy className="mr-2 h-4 w-4" />
           Copy Run Command
         </Button>
         {test.errorLog && (
@@ -186,7 +195,7 @@ const AnalyzeLogButton = ({ test }: { test: Test }) => {
               <Ticket className="mr-2 h-4 w-4" />
               Create Issue
             </Button>
-            <Button size="sm" variant="outline" onClick={handleCopyLog}>
+            <Button size="sm" variant="outline" onClick={() => onCopyLog(test.errorLog || '')}>
               <Copy className="mr-2 h-4 w-4" />
               Copy Log
             </Button>
@@ -194,45 +203,103 @@ const AnalyzeLogButton = ({ test }: { test: Test }) => {
         )}
       </div>
       <Dialog open={isAnalysisOpen} onOpenChange={setIsAnalysisOpen}>
-        <DialogContent className="sm:max-w-[625px]">
-          <DialogHeader>
-            <DialogTitle>AI Error Log Analysis</DialogTitle>
-            <DialogDescription>
-              AI-powered suggestions for the test failure. This is a suggestion and may not be accurate.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-4 w-5/6" />
-              </div>
-            ) : (
-              <div className="rounded-md border p-4 bg-secondary/50 overflow-y-auto max-h-[60vh]">
-                <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-foreground/90 break-words">
-                  <ReactMarkdown>
-                    {analysis || ''}
-                  </ReactMarkdown>
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col border-none shadow-2xl">
+          <DialogHeader className="pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-primary/10">
+                  <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+                </div>
+                <div>
+                  <DialogTitle className="text-2xl font-bold tracking-tight">AI Failure Analysis</DialogTitle>
+                  <DialogDescription className="text-base">
+                    Intelligent insights based on your test's error logs and stack traces.
+                  </DialogDescription>
                 </div>
               </div>
-            )}
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto py-4 space-y-6 pr-2">
             <div>
-              <div className="flex items-center justify-between mb-2 mt-4">
-                <h4 className="font-semibold text-sm">Original Error Log:</h4>
-                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => {
-                  navigator.clipboard.writeText(test.errorLog || '');
-                  toast({ title: "Copied", description: "Error log copied to clipboard." });
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-semibold flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  AI Suggestions
+                </h4>
+                {analysis && (
+                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => {
+                    navigator.clipboard.writeText(analysis);
+                    toast({ title: "Copied", description: "Analysis copied to clipboard." });
+                  }}>
+                    <Copy className="mr-1 h-3 w-3" />
+                    Copy Result
+                  </Button>
+                )}
+              </div>
+
+              {isLoading ? (
+                <Card className="border-dashed">
+                  <CardContent className="pt-6 space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                    <Skeleton className="h-4 w-4/6" />
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 to-purple-600/30 rounded-xl blur-lg opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+                  <div className="relative rounded-xl border bg-card p-8 shadow-xl overflow-hidden leading-relaxed">
+                    <div className="prose prose-base dark:prose-invert max-w-none text-foreground/90">
+                      <ReactMarkdown
+                        components={{
+                          code: ({ node, ...props }) => <code className="bg-primary/10 text-primary px-2 py-0.5 rounded font-mono text-[0.85rem] border border-primary/20" {...props} />,
+                          p: ({ node, ...props }) => <p className="mb-6 last:mb-0 leading-7" {...props} />,
+                          strong: ({ node, ...props }) => <strong className="font-extrabold text-primary border-b border-primary/20 pb-0.5" {...props} />,
+                          ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-6 space-y-3" {...props} />,
+                          li: ({ node, ...props }) => <li className="marker:text-primary marker:font-bold" {...props} />,
+                          h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-4 text-primary" {...props} />,
+                          h2: ({ node, ...props }) => <h2 className="text-xl font-bold mb-3 mt-8 first:mt-0 text-primary" {...props} />,
+                          h3: ({ node, ...props }) => <h3 className="text-lg font-bold mb-2 mt-6 text-primary" {...props} />,
+                        }}
+                      >
+                        {analysis || 'No analysis available.'}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  Original Error Log
+                </h4>
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => {
+                  navigator.clipboard.writeText(stripAnsi(test.errorLog || ''));
+                  toast({ title: "Copied", description: "Cleaned error log copied." });
                 }}>
                   <Copy className="mr-1 h-3 w-3" />
-                  Copy
+                  Copy Clean Log
                 </Button>
               </div>
-              <div className="bg-muted text-muted-foreground p-3 rounded-md text-xs overflow-x-auto max-h-[200px] overflow-y-auto whitespace-pre-wrap font-mono">
-                {test.errorLog}
+              <div className="bg-zinc-950 text-zinc-300 p-4 rounded-lg text-xs overflow-x-auto max-h-[300px] overflow-y-auto whitespace-pre-wrap font-mono border-zinc-800 shadow-inner">
+                {stripAnsi(test.errorLog || 'No error log recorded.')}
               </div>
             </div>
           </div>
+
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setIsAnalysisOpen(false)}>Close Analysis</Button>
+            <Button onClick={() => {
+              setIsAnalysisOpen(false);
+              setIsIssueOpen(true);
+            }}>
+              Create Issue from Analysis
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       <CreateIssueDialog test={test} isOpen={isIssueOpen} onOpenChange={setIsIssueOpen} />
@@ -276,6 +343,62 @@ export function TestDetails({ run, flakyTestNames = new Set() }: TestDetailsProp
   const [filter, setFilter] = React.useState<TestStatus | "all">("all");
   const [sort, setSort] = React.useState<"default" | "duration-asc" | "duration-desc" | "name-asc" | "name-desc">("default");
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [isIndividualRerunning, setIsIndividualRerunning] = React.useState<string | null>(null);
+
+  const { toast } = useToast();
+
+  const handleRerun = async (file: string, title: string, id: string) => {
+    setIsIndividualRerunning(id);
+    try {
+      const response = await fetch(`${SERVER_URL}/api/rerun-test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ file, title }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Test Rerun Started",
+          description: `Running: ${title}`,
+        });
+      } else {
+        const err = await response.json();
+        toast({
+          variant: "destructive",
+          title: "Rerun Failed",
+          description: err.error || "Could not restart test.",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description: "Could not connect to the test server.",
+      });
+    } finally {
+      setIsIndividualRerunning(null);
+    }
+  };
+
+  const handleCopyLog = (log: string) => {
+    navigator.clipboard.writeText(log);
+    toast({
+      title: "Copied to Clipboard",
+      description: "The error log has been copied.",
+    });
+  };
+
+  const handleCopyCommand = (test: Test) => {
+    const location = test.description.replace('Location: ', '');
+    const command = `npx playwright test ${location}`;
+    navigator.clipboard.writeText(command);
+    toast({
+      title: "Command Copied",
+      description: "The run command has been copied to your clipboard.",
+    });
+  };
 
   const filteredAndSortedTests = React.useMemo(() => {
     let tests = [...run.tests];
@@ -381,6 +504,21 @@ export function TestDetails({ run, flakyTestNames = new Set() }: TestDetailsProp
                       <StatusIcon status={test.status} />
                       <span className="font-medium flex-1">{test.name}</span>
                       <div className="flex items-center gap-4">
+                        <span
+                          role="button"
+                          className={cn(
+                            "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-8 w-8 hover:bg-green-500/20 text-green-600 cursor-pointer",
+                            isIndividualRerunning === test.id && "animate-pulse",
+                            isIndividualRerunning !== null && "pointer-events-none opacity-50"
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRerun(test.description.replace('Location: ', '').split(':')[0], test.name, test.id);
+                          }}
+                          title="Quick Rerun"
+                        >
+                          <Play className={cn("h-4 w-4", isIndividualRerunning === test.id && "fill-current")} />
+                        </span>
                         {isFlaky && (
                           <Badge variant='outline' className="border-orange-500/50 bg-orange-500/10 text-orange-700 dark:text-orange-400">
                             <HelpCircle className="mr-1.5 h-3 w-3" />
@@ -426,9 +564,15 @@ export function TestDetails({ run, flakyTestNames = new Set() }: TestDetailsProp
 
                       <TabsContent value="analysis">
                         {(test.status === 'failed' || test.status === 'interrupted') && (
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-4">Copy the command to run this specific test, or use AI to suggest reasons for the failure.</p>
-                            <AnalyzeLogButton test={test} />
+                          <div className="space-y-4">
+                            <p className="text-sm text-muted-foreground">Actions for this test failure.</p>
+                            <TestActions
+                              test={test}
+                              onRerun={handleRerun}
+                              isRerunning={isIndividualRerunning === test.id}
+                              onCopyLog={handleCopyLog}
+                              onCopyCommand={() => handleCopyCommand(test)}
+                            />
                           </div>
                         )}
                       </TabsContent>

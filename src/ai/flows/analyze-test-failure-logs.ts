@@ -8,8 +8,8 @@
  * - AnalyzeTestFailureLogsOutput - The return type for the analyzeTestFailureLogs function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const AnalyzeTestFailureLogsInputSchema = z.object({
   errorLog: z
@@ -33,8 +33,8 @@ export async function analyzeTestFailureLogs(
 
 const prompt = ai.definePrompt({
   name: 'analyzeTestFailureLogsPrompt',
-  input: {schema: AnalyzeTestFailureLogsInputSchema},
-  output: {schema: AnalyzeTestFailureLogsOutputSchema},
+  input: { schema: AnalyzeTestFailureLogsInputSchema },
+  output: { schema: AnalyzeTestFailureLogsOutputSchema },
   prompt: `You are an expert software test engineer. You will analyze the error log from a Playwright test execution and suggest potential reasons for the failure.
 
 Error Log:
@@ -51,7 +51,7 @@ const analyzeTestFailureLogsFlow = ai.defineFlow(
     outputSchema: AnalyzeTestFailureLogsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const { output } = await prompt(input);
     return output!;
   }
 );

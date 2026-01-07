@@ -10,7 +10,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "dashboard:dev": "cd ReelRecruite-testing/dashboard && npm run dev",
+    "server": "cd ReelRecruite-testing && node server/server.js"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",
@@ -37,6 +39,7 @@
     "@radix-ui/react-tabs": "^1.1.3",
     "@radix-ui/react-toast": "^1.2.6",
     "@radix-ui/react-tooltip": "^1.1.8",
+    "@tailwindcss/typography": "^0.5.19",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",

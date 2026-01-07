@@ -65,16 +65,18 @@ const getStatusBadgeClasses = (status: TestStatus) => {
 };
 
 
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3001';
+
 export default function Home() {
   const [runs, setRuns] = React.useState<TestRun[]>([]);
+  const [isRunning, setIsRunning] = React.useState(false);
   const [isClearAlertOpen, setIsClearAlertOpen] = React.useState(false);
 
   const { toast } = useToast();
   const [toastToShow, setToastToShow] = React.useState<ToastInfo | null>(null);
   const [canShowNotificationButton, setCanShowNotificationButton] = React.useState(false);
 
-
-  const processJsonReport = React.useCallback((json: any) => {
+  const processJsonReport = React.useCallback((json: any, silent: boolean = false) => {
     const processAttachments = (attachments: any[]): TestAttachment[] => {
       if (!attachments) return [];
       return attachments.map((att: any) => {
@@ -145,11 +147,13 @@ export default function Home() {
       tests = extractTestsFromSuites(json.suites);
 
       if (tests.length === 0) {
-        setToastToShow({
-          variant: "destructive",
-          title: "Empty Report",
-          description: "The provided report does not contain any tests.",
-        });
+        if (!silent) {
+          setToastToShow({
+            variant: "destructive",
+            title: "Empty Report",
+            description: "The provided report does not contain any tests.",
+          });
+        }
         return;
       }
 
@@ -160,11 +164,13 @@ export default function Home() {
       };
       newRuns = [newRun];
     } else {
-      setToastToShow({
-        variant: "destructive",
-        title: "Invalid Format",
-        description: "Please paste a valid Playwright JSON report or a previously exported runs file.",
-      });
+      if (!silent) {
+        setToastToShow({
+          variant: "destructive",
+          title: "Invalid Format",
+          description: "Please paste a valid Playwright JSON report or a previously exported runs file.",
+        });
+      }
       return;
     }
 
@@ -173,19 +179,24 @@ export default function Home() {
       const filteredNewRuns = newRuns.filter(run => !existingRunIds.has(run.runId));
 
       if (filteredNewRuns.length === 0) {
-        setToastToShow({
-          title: "No New Reports",
-          description: "All imported reports were already present.",
-        });
+        if (!silent) {
+          setToastToShow({
+            title: "No New Reports",
+            description: "All imported reports were already present.",
+          });
+        }
         return prevRuns;
       }
 
       const updatedRuns = [...filteredNewRuns, ...prevRuns];
       localStorage.setItem('testRuns', JSON.stringify(updatedRuns));
-      setToastToShow({
-        title: "Reports Imported",
-        description: `Successfully imported ${filteredNewRuns.length} new test run(s).`,
-      });
+
+      if (!silent) {
+        setToastToShow({
+          title: "Reports Imported",
+          description: `Successfully imported ${filteredNewRuns.length} new test run(s).`,
+        });
+      }
 
       // Check for failures and send notification
       if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -257,35 +268,67 @@ export default function Home() {
     }
   }, []);
 
-  React.useEffect(() => {
-    // Auto-fetch latest report.json
-    fetch('/report.json', { cache: "no-store" })
-      .then(response => {
-        if (!response.ok) {
-          return null; // Don't throw for 404s etc.
-        }
-        // Check content-type to avoid parsing non-JSON responses
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-          return response.json();
-        } else {
-          return null;
-        }
-      })
-      .then(data => {
-        if (data) {
-          processJsonReport(data);
-        }
-      })
-      .catch(() => {
-        // Silently fail if fetching fails, as this is an optional enhancement
-        console.log("No new report.json found or failed to fetch.");
-      });
+  const fetchRuns = React.useCallback(async () => {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/runs`);
+      if (response.ok) {
+        const data = await response.json();
+        processJsonReport(data, true);
+      }
+    } catch (error) {
+      console.error("Failed to fetch runs:", error);
+    }
   }, [processJsonReport]);
 
+  React.useEffect(() => {
+    fetchRuns();
+    const interval = setInterval(fetchRuns, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
+  }, [fetchRuns]); const handleRunAll = async () => {
+    setIsRunning(true);
+    try {
+      const response = await fetch(`${SERVER_URL}/api/run-all-tests`, { method: 'POST' });
+      if (response.ok) {
+        toast({
+          title: "Test Run Started",
+          description: "A full set of tests is now running.",
+        });
+      } else {
+        const err = await response.json();
+        toast({
+          variant: "destructive",
+          title: "Run Failed",
+          description: err.error || "Could not start test run.",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description: "Could not connect to the test server.",
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  };
 
-
-
+  const handleStopRun = async () => {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/stop-run`, { method: 'POST' });
+      if (response.ok) {
+        toast({
+          title: "Stopping Tests",
+          description: "Request sent to stop the current test run.",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not stop the test run.",
+      });
+    }
+  };
 
   const handleExport = () => {
     if (runs.length === 0) return;
@@ -355,13 +398,16 @@ export default function Home() {
           <div className="hidden sm:flex items-center gap-2">
 
 
-            <Button onClick={handleExport} disabled={runs.length === 0}>
-              <Download className="mr-2 h-4 w-4" />
-              Export Runs
+            <Button onClick={handleRunAll} disabled={isRunning} variant="default" className="bg-green-600 hover:bg-green-700 text-white">
+              <Play className="mr-2 h-4 w-4" />
+              Run All Tests
             </Button>
-            <Button variant="destructive" onClick={() => setIsClearAlertOpen(true)} disabled={runs.length === 0}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Clear Data
+            <Button onClick={handleStopRun} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
+              Stop Tests
+            </Button>
+            <Button onClick={handleExport} variant="outline" disabled={runs.length === 0}>
+              <Download className="mr-2 h-4 w-4" />
+              Export
             </Button>
           </div>
         </div>
