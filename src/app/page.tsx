@@ -35,7 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, Play, Bell, GitMerge, Monitor, EyeOff } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, Play, Bell, GitMerge, Monitor, EyeOff, Search } from "lucide-react";
 import type { TestRun, Test, TestStatus, TestAttachment } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
@@ -286,7 +286,9 @@ export default function Home() {
     fetchRuns();
     const interval = setInterval(fetchRuns, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
-  }, [fetchRuns]); const handleRunAll = async () => {
+  }, [fetchRuns]);
+
+  const handleRunAll = async () => {
     setIsRunning(true);
     try {
       const response = await fetch(`${SERVER_URL}/api/run-all-tests`, { method: 'POST' });
@@ -397,6 +399,28 @@ export default function Home() {
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden lg:flex items-center gap-2 text-muted-foreground w-40 justify-between px-3"
+              onClick={() => {
+                const event = new KeyboardEvent('keydown', {
+                  key: 'k',
+                  ctrlKey: true,
+                  metaKey: true,
+                  bubbles: true
+                });
+                document.dispatchEvent(event);
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                <span>Search...</span>
+              </div>
+              <kbd className="pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 flex">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </Button>
             {canShowNotificationButton && (
               <Button variant="outline" size="sm" onClick={requestNotificationPermission}>
                 <Bell className="mr-2 h-4 w-4" />

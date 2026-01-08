@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -84,6 +83,7 @@ body {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -94,18 +94,22 @@ body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
   .no-print {
     display: none !important;
   }
+
   .print-container {
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none !important;
     border: none !important;
   }
+
   .print-break-before {
     break-before: page;
   }
+
   .print-break-inside-avoid {
     break-inside: avoid;
   }

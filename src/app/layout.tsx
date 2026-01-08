@@ -1,9 +1,11 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 import { Inter } from 'next/font/google';
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/theme-provider';
+import { CommandMenu } from '@/components/command-menu';
+import { PageAnimate } from '@/components/page-animate';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -31,7 +33,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <PageAnimate>
+            {children}
+          </PageAnimate>
+          <CommandMenu />
           <Toaster />
         </ThemeProvider>
       </body>

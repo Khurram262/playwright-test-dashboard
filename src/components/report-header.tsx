@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { TestRun } from "@/types";
-import { ArrowLeft, FileJson, Printer } from "lucide-react";
+import { ArrowLeft, FileJson, Printer, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type ReportHeaderProps = {
@@ -52,6 +52,28 @@ export function ReportHeader({ run }: ReportHeaderProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden lg:flex items-center gap-2 text-muted-foreground w-40 justify-between px-3"
+              onClick={() => {
+                const event = new KeyboardEvent('keydown', {
+                  key: 'k',
+                  ctrlKey: true,
+                  metaKey: true,
+                  bubbles: true
+                });
+                document.dispatchEvent(event);
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                <span>Search...</span>
+              </div>
+              <kbd className="pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 flex">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </Button>
             <Button variant="outline" size="sm" onClick={handleJsonExport}>
               <FileJson className="mr-2 h-4 w-4" />
               Export JSON
