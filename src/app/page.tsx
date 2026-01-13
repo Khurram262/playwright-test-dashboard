@@ -42,6 +42,7 @@ import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
 import { OverallSummary } from "@/components/overall-summary";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { LiveTestView } from "@/components/live-test-view";
+import { AIInsights } from "@/components/ai-insights";
 
 type ToastInfo = {
   title: string;
@@ -559,6 +560,10 @@ export default function Home() {
           <>
             {showLiveTests && <LiveTestView />}
             <OverallSummary runs={sortedRuns} flakyTestsCount={flakyTestNames.size} />
+
+            {/* AI Insights Section */}
+            {sortedRuns.length > 0 && <AIInsights runs={sortedRuns} />}
+
             <Card className="dark:border-border/50 dark:bg-card/50 dark:shadow-xl">
               <CardHeader className="dark:border-b dark:border-border/40">
                 <CardTitle className="dark:text-foreground/90">All Test Runs</CardTitle>
