@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -29,7 +28,8 @@ import {
 } from '@/components/ui/chart';
 import type { TestRun } from '@/types';
 import { getTestRunSummary } from '@/lib/utils';
-import { Briefcase, CheckCircle2, Clock, HelpCircle, Package, AlertCircle } from 'lucide-react';
+import { Briefcase, CheckCircle2, HelpCircle, Package, TrendingUp, Activity, Zap, AlertTriangle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const chartConfig = {
     passed: { label: 'Passed', color: 'hsl(var(--chart-1))' },
@@ -96,122 +96,189 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
         }).slice(0, 15).reverse();
     }, [runs]);
 
+    const statCards = [
+        {
+            title: "Total Runs",
+            value: overallSummary.totalRuns,
+            description: "Test execution sessions",
+            icon: Briefcase,
+            gradient: "from-blue-500/20 to-cyan-500/20",
+            iconColor: "text-blue-500",
+            bgGlow: "bg-blue-500/10"
+        },
+        {
+            title: "Total Tests",
+            value: overallSummary.totalTests,
+            description: "Across all executions",
+            icon: Package,
+            gradient: "from-violet-500/20 to-purple-500/20",
+            iconColor: "text-violet-500",
+            bgGlow: "bg-violet-500/10"
+        },
+        {
+            title: "Pass Rate",
+            value: `${overallSummary.passPercentage.toFixed(1)}%`,
+            description: `${overallSummary.passed} / ${overallSummary.totalTests} passed`,
+            icon: CheckCircle2,
+            gradient: "from-emerald-500/20 to-green-500/20",
+            iconColor: "text-emerald-500",
+            bgGlow: "bg-emerald-500/10"
+        },
+        {
+            title: "Flaky Tests",
+            value: flakyTestsCount,
+            description: "Inconsistent outcomes",
+            icon: AlertTriangle,
+            gradient: "from-amber-500/20 to-orange-500/20",
+            iconColor: "text-amber-500",
+            bgGlow: "bg-amber-500/10"
+        },
+    ];
 
     return (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Runs</CardTitle>
-                    <Briefcase className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{overallSummary.totalRuns}</div>
-                    <p className="text-xs text-muted-foreground">Total number of test executions</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
-                    <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{overallSummary.totalTests}</div>
-                    <p className="text-xs text-muted-foreground">Across all test runs</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Overall Pass Rate</CardTitle>
-                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{overallSummary.passPercentage.toFixed(1)}%</div>
-                    <p className="text-xs text-muted-foreground">{overallSummary.passed} passed out of {overallSummary.totalTests}</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Flaky Tests</CardTitle>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">
-                        {flakyTestsCount}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Tests with inconsistent outcomes</p>
-                </CardContent>
-            </Card>
+            {/* Stat Cards */}
+            {statCards.map((stat, index) => (
+                <motion.div
+                    key={stat.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
+                    <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card/80 to-muted/30 backdrop-blur-sm transition-all hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30">
+                        {/* Background Glow */}
+                        <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full ${stat.bgGlow} blur-3xl opacity-20`} />
 
-            <Card className="col-span-full lg:col-span-2">
-                <CardHeader>
-                    <CardTitle>Overall Test Status</CardTitle>
-                    <CardDescription>Aggregated results from all {overallSummary.totalRuns} runs.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex items-center justify-center pt-4">
-                    <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
+                        <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground/60">
+                                {stat.title}
+                            </CardTitle>
+                            <div className={`rounded-xl bg-gradient-to-br ${stat.gradient} p-2.5 shadow-lg`}>
+                                <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="relative">
+                            <div className="text-3xl font-black tabular-nums tracking-tight">
+                                {stat.value}
+                            </div>
+                            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50">
+                                {stat.description}
+                            </p>
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            ))}
+
+            {/* Overall Test Status - Pie Chart */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.4 }}
+                className="col-span-full lg:col-span-2"
+            >
+                <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card/80 to-muted/30 backdrop-blur-sm">
+                    {/* Decorative Elements */}
+                    <div className="absolute right-0 top-0 h-40 w-40 bg-primary/5 blur-3xl rounded-full" />
+
+                    <CardHeader className="relative">
+                        <div className="flex items-center gap-3">
+                            <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 p-2.5 shadow-lg">
+                                <Activity className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-lg font-black tracking-tight">Overall Test Status</CardTitle>
+                                <CardDescription className="text-xs font-semibold">
+                                    Aggregated results from {overallSummary.totalRuns} execution{overallSummary.totalRuns !== 1 ? 's' : ''}
+                                </CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="relative flex items-center justify-center pt-4">
+                        <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent hideLabel />}
+                                    />
+                                    <Pie
+                                        data={pieChartData}
+                                        dataKey="value"
+                                        nameKey="name"
+                                        innerRadius="60%"
+                                        strokeWidth={5}
+                                    >
+                                        {pieChartData.map((entry) => (
+                                            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                    <ChartLegend
+                                        content={<ChartLegendContent nameKey="name" />}
+                                        className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+            </motion.div>
+
+            {/* Historical Trend - Bar Chart */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+                className="col-span-full lg:col-span-2"
+            >
+                <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card/80 to-muted/30 backdrop-blur-sm">
+                    {/* Decorative Elements */}
+                    <div className="absolute left-0 top-0 h-40 w-40 bg-emerald-500/5 blur-3xl rounded-full" />
+
+                    <CardHeader className="relative">
+                        <div className="flex items-center gap-3">
+                            <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 p-2.5 shadow-lg">
+                                <TrendingUp className="h-5 w-5 text-emerald-500" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-lg font-black tracking-tight">Historical Trend</CardTitle>
+                                <CardDescription className="text-xs font-semibold">
+                                    Test statuses for the last {historicalData.length} execution{historicalData.length !== 1 ? 's' : ''}
+                                </CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="relative">
+                        <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                            <BarChart accessibilityLayer data={historicalData}>
+                                <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.2} />
+                                <XAxis
+                                    dataKey="date"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickMargin={8}
+                                    tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 600 }}
+                                />
+                                <YAxis
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickMargin={8}
+                                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 600 }}
+                                />
                                 <ChartTooltip
                                     cursor={false}
-                                    content={<ChartTooltipContent hideLabel />}
+                                    content={<ChartTooltipContent indicator="dot" />}
                                 />
-                                <Pie
-                                    data={pieChartData}
-                                    dataKey="value"
-                                    nameKey="name"
-                                    innerRadius="60%"
-                                    strokeWidth={5}
-                                >
-                                    {pieChartData.map((entry) => (
-                                        <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                    ))}
-                                </Pie>
-                                <ChartLegend
-                                    content={<ChartLegendContent nameKey="name" />}
-                                    className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
-
-            <Card className="col-span-full lg:col-span-2">
-                <CardHeader>
-                    <CardTitle>Historical Trend</CardTitle>
-                    <CardDescription>Test statuses for the last {historicalData.length} runs.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                        <BarChart accessibilityLayer data={historicalData}>
-                            <CartesianGrid vertical={false} />
-                            <XAxis
-                                dataKey="date"
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={8}
-                                tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                            />
-                            <YAxis
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={8}
-                                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                            />
-                            <ChartTooltip
-                                cursor={false}
-                                content={<ChartTooltipContent indicator="dot" />}
-                            />
-                            <ChartLegend content={<ChartLegendContent />} />
-                            <Bar dataKey="passed" stackId="a" fill="hsl(var(--chart-1))" />
-                            <Bar dataKey="failed" stackId="a" fill="hsl(var(--chart-3))" />
-                            <Bar dataKey="skipped" stackId="a" fill="hsl(var(--chart-4))" />
-                            <Bar dataKey="interrupted" stackId="a" fill="hsl(var(--chart-5))" />
-                        </BarChart>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
+                                <ChartLegend content={<ChartLegendContent />} />
+                                <Bar dataKey="passed" stackId="a" fill="hsl(var(--chart-1))" radius={[0, 0, 0, 0]} />
+                                <Bar dataKey="failed" stackId="a" fill="hsl(var(--chart-3))" radius={[0, 0, 0, 0]} />
+                                <Bar dataKey="skipped" stackId="a" fill="hsl(var(--chart-4))" radius={[0, 0, 0, 0]} />
+                                <Bar dataKey="interrupted" stackId="a" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+            </motion.div>
         </div>
     );
 }

@@ -35,7 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, Play, Bell, GitMerge, Monitor, EyeOff, Search } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, Play, Bell, GitMerge, Monitor, EyeOff, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import type { TestRun, Test, TestStatus, TestAttachment } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
@@ -632,9 +632,12 @@ export default function Home() {
 
                 {/* Pagination Controls */}
                 {totalPages >= 1 && (
-                  <div className="flex items-center justify-end space-x-4 p-4 border-t dark:border-border/40 dark:bg-muted/20">
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground/80">Rows per page</p>
+                  <div className="relative flex items-center justify-between border-t border-border/30 bg-gradient-to-r from-muted/20 via-transparent to-muted/20 px-6 py-4 backdrop-blur-sm">
+                    {/* Left side - Rows per page */}
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">
+                        Rows per page
+                      </span>
                       <Select
                         value={itemsPerPage.toString()}
                         onValueChange={(value) => {
@@ -642,12 +645,16 @@ export default function Home() {
                           setCurrentPage(1);
                         }}
                       >
-                        <SelectTrigger className="h-8 w-[70px] dark:border-border/50 dark:bg-background/50">
+                        <SelectTrigger className="h-9 w-[80px] rounded-lg border-border/50 bg-background/80 font-semibold shadow-sm transition-all hover:border-primary/50 hover:bg-background focus:ring-2 focus:ring-primary/20">
                           <SelectValue placeholder={itemsPerPage.toString()} />
                         </SelectTrigger>
-                        <SelectContent side="top">
+                        <SelectContent side="top" className="rounded-lg border-border/50 bg-background/95 backdrop-blur-xl">
                           {[10, 25, 50, 100].map((pageSize) => (
-                            <SelectItem key={pageSize} value={pageSize.toString()}>
+                            <SelectItem
+                              key={pageSize}
+                              value={pageSize.toString()}
+                              className="cursor-pointer font-semibold transition-colors hover:bg-primary/10"
+                            >
                               {pageSize}
                             </SelectItem>
                           ))}
@@ -655,27 +662,45 @@ export default function Home() {
                       </Select>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    {/* Center - Page info with gradient */}
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                      <div className="flex items-center gap-2 rounded-full border border-border/30 bg-gradient-to-r from-background/80 via-muted/20 to-background/80 px-4 py-1.5 shadow-lg backdrop-blur-sm">
+                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/40">
+                          Page
+                        </span>
+                        <span className="text-sm font-black tabular-nums text-foreground">
+                          {currentPage}
+                        </span>
+                        <span className="text-xs font-bold text-muted-foreground/60">
+                          of
+                        </span>
+                        <span className="text-sm font-black tabular-nums text-foreground">
+                          {totalPages}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Right side - Navigation buttons */}
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className="dark:border-border/50 dark:hover:bg-primary/20"
+                        className="h-9 rounded-lg border-border/50 bg-background/80 px-4 font-semibold shadow-sm transition-all hover:border-primary/50 hover:bg-primary/10 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-background/80"
                       >
+                        <ChevronLeft className="mr-1 h-4 w-4" />
                         Previous
                       </Button>
-                      <div className="text-sm font-medium text-muted-foreground dark:text-muted-foreground/80">
-                        Page {currentPage} of {totalPages}
-                      </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className="dark:border-border/50 dark:hover:bg-primary/20"
+                        className="h-9 rounded-lg border-border/50 bg-background/80 px-4 font-semibold shadow-sm transition-all hover:border-primary/50 hover:bg-primary/10 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-background/80"
                       >
                         Next
+                        <ChevronRight className="ml-1 h-4 w-4" />
                       </Button>
                     </div>
                   </div>
