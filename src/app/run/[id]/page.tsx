@@ -61,12 +61,12 @@ export default function ReportPage() {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-background/50">
       <ReportHeader run={run} />
       <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         <ReportSummaryChart run={run} />
         <TestDetails run={run} flakyTestNames={flakyTestNames} />
       </main>
-    </>
+    </div>
   );
 }

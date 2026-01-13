@@ -564,83 +564,95 @@ export default function Home() {
             {/* AI Insights Section */}
             {sortedRuns.length > 0 && <AIInsights runs={sortedRuns} />}
 
-            <Card className="dark:border-border/50 dark:bg-card/50 dark:shadow-xl">
-              <CardHeader className="dark:border-b dark:border-border/40">
-                <CardTitle className="dark:text-foreground/90">All Test Runs</CardTitle>
+            <Card className="border-border/50 bg-card/50">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold">All Test Runs</CardTitle>
+                    <CardDescription className="text-sm">
+                      Complete history of {sortedRuns.length} test execution{sortedRuns.length !== 1 ? 's' : ''}
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Run ID</TableHead>
-                      <TableHead className="hidden md:table-cell">Execution Date</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Passed</TableHead>
-                      <TableHead>Failed</TableHead>
-                      <TableHead>Skipped</TableHead>
-                      <TableHead>Interrupted</TableHead>
-                      <TableHead>Flaky</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedRuns.map((run) => {
-                      const summary = getTestRunSummary(run);
-                      const flakyInRun = run.tests.filter(t => flakyTestNames.has(t.name)).length;
-                      return (
-                        <TableRow
-                          key={run.runId}
-                          className="hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors border-b dark:border-border/40"
-                        >
-                          <TableCell className="font-medium font-mono text-sm dark:text-foreground/90">{run.runId.substring(0, 15)}...</TableCell>
-                          <TableCell className="hidden md:table-cell text-muted-foreground dark:text-muted-foreground/80">
-                            {new Date(run.executionDate).toLocaleString()}
-                          </TableCell>
-                          <TableCell className="dark:text-foreground/90">{summary.total}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={cn(getStatusBadgeClasses('passed'), summary.passed > 0 && 'font-semibold')}>
-                              {summary.passed}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={cn(getStatusBadgeClasses('failed'), summary.failed > 0 && 'font-semibold')}>
-                              {summary.failed}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={cn(getStatusBadgeClasses('skipped'), summary.skipped > 0 && 'font-semibold')}>
-                              {summary.skipped}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={cn(getStatusBadgeClasses('interrupted'), summary.interrupted > 0 && 'font-semibold')}>
-                              {summary.interrupted}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className={cn('border-orange-500/60 bg-orange-500/15 text-orange-700 dark:border-orange-400/50 dark:bg-orange-400/10 dark:text-orange-300 shadow-sm dark:shadow-orange-500/10', flakyInRun > 0 && 'font-semibold')}>
-                              {flakyInRun}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button asChild variant="ghost" size="sm" className="hover:bg-primary/10 dark:hover:bg-primary/20">
-                              <Link href={`/run/${run.runId}`}>
-                                View Report <ArrowRight className="ml-2 h-4 w-4" />
-                              </Link>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-border/50">
+                        <TableHead className="font-semibold">Run ID</TableHead>
+                        <TableHead className="hidden md:table-cell font-semibold">Execution Date</TableHead>
+                        <TableHead className="font-semibold">Total</TableHead>
+                        <TableHead className="font-semibold">Passed</TableHead>
+                        <TableHead className="font-semibold">Failed</TableHead>
+                        <TableHead className="font-semibold">Skipped</TableHead>
+                        <TableHead className="font-semibold">Interrupted</TableHead>
+                        <TableHead className="font-semibold">Flaky</TableHead>
+                        <TableHead className="text-right font-semibold">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedRuns.map((run) => {
+                        const summary = getTestRunSummary(run);
+                        const flakyInRun = run.tests.filter(t => flakyTestNames.has(t.name)).length;
+                        return (
+                          <TableRow
+                            key={run.runId}
+                            className="hover:bg-muted/30 transition-colors border-b border-border/30"
+                          >
+                            <TableCell className="font-mono text-xs">{run.runId.substring(0, 15)}...</TableCell>
+                            <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                              {new Date(run.executionDate).toLocaleString()}
+                            </TableCell>
+                            <TableCell className="font-semibold text-sm">{summary.total}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn(getStatusBadgeClasses('passed'), summary.passed > 0 && 'font-semibold')}>
+                                {summary.passed}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn(getStatusBadgeClasses('failed'), summary.failed > 0 && 'font-semibold')}>
+                                {summary.failed}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn(getStatusBadgeClasses('skipped'), summary.skipped > 0 && 'font-semibold')}>
+                                {summary.skipped}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn(getStatusBadgeClasses('interrupted'), summary.interrupted > 0 && 'font-semibold')}>
+                                {summary.interrupted}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn('border-orange-500/60 bg-orange-500/15 text-orange-700 dark:border-orange-400/50 dark:bg-orange-400/10 dark:text-orange-300', flakyInRun > 0 && 'font-semibold')}>
+                                {flakyInRun}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button asChild variant="ghost" size="sm" className="h-8 text-xs hover:bg-primary/10">
+                                <Link href={`/run/${run.runId}`}>
+                                  View <ArrowRight className="ml-1 h-3 w-3" />
+                                </Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
 
                 {/* Pagination Controls */}
                 {totalPages >= 1 && (
-                  <div className="relative flex items-center justify-between border-t border-border/30 bg-gradient-to-r from-muted/20 via-transparent to-muted/20 px-6 py-4 backdrop-blur-sm">
+                  <div className="flex items-center justify-between border-t border-border/30 bg-muted/20 px-6 py-4">
                     {/* Left side - Rows per page */}
                     <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">
+                      <span className="text-xs font-semibold text-muted-foreground">
                         Rows per page
                       </span>
                       <Select
@@ -650,15 +662,14 @@ export default function Home() {
                           setCurrentPage(1);
                         }}
                       >
-                        <SelectTrigger className="h-9 w-[80px] rounded-lg border-border/50 bg-background/80 font-semibold shadow-sm transition-all hover:border-primary/50 hover:bg-background focus:ring-2 focus:ring-primary/20">
+                        <SelectTrigger className="h-8 w-[70px] border-border/50">
                           <SelectValue placeholder={itemsPerPage.toString()} />
                         </SelectTrigger>
-                        <SelectContent side="top" className="rounded-lg border-border/50 bg-background/95 backdrop-blur-xl">
+                        <SelectContent side="top">
                           {[10, 25, 50, 100].map((pageSize) => (
                             <SelectItem
                               key={pageSize}
                               value={pageSize.toString()}
-                              className="cursor-pointer font-semibold transition-colors hover:bg-primary/10"
                             >
                               {pageSize}
                             </SelectItem>
@@ -667,22 +678,12 @@ export default function Home() {
                       </Select>
                     </div>
 
-                    {/* Center - Page info with gradient */}
-                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                      <div className="flex items-center gap-2 rounded-full border border-border/30 bg-gradient-to-r from-background/80 via-muted/20 to-background/80 px-4 py-1.5 shadow-lg backdrop-blur-sm">
-                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/40">
-                          Page
-                        </span>
-                        <span className="text-sm font-black tabular-nums text-foreground">
-                          {currentPage}
-                        </span>
-                        <span className="text-xs font-bold text-muted-foreground/60">
-                          of
-                        </span>
-                        <span className="text-sm font-black tabular-nums text-foreground">
-                          {totalPages}
-                        </span>
-                      </div>
+                    {/* Center - Page info */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">Page</span>
+                      <span className="font-semibold">{currentPage}</span>
+                      <span className="text-muted-foreground">of</span>
+                      <span className="font-semibold">{totalPages}</span>
                     </div>
 
                     {/* Right side - Navigation buttons */}
@@ -692,7 +693,7 @@ export default function Home() {
                         size="sm"
                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className="h-9 rounded-lg border-border/50 bg-background/80 px-4 font-semibold shadow-sm transition-all hover:border-primary/50 hover:bg-primary/10 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-background/80"
+                        className="h-8"
                       >
                         <ChevronLeft className="mr-1 h-4 w-4" />
                         Previous
@@ -702,7 +703,7 @@ export default function Home() {
                         size="sm"
                         onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className="h-9 rounded-lg border-border/50 bg-background/80 px-4 font-semibold shadow-sm transition-all hover:border-primary/50 hover:bg-primary/10 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-background/80"
+                        className="h-8"
                       >
                         Next
                         <ChevronRight className="ml-1 h-4 w-4" />

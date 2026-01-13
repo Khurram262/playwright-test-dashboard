@@ -170,33 +170,43 @@ const TestActions = ({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3">
         <Button
           size="sm"
           onClick={() => onRerun(test.description.replace('Location: ', '').split(':')[0], test.name, test.id)}
           disabled={isRerunning}
-          variant="default"
-          className="bg-green-600 hover:bg-green-700 text-white"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-500/20 transition-all active:scale-95"
         >
-          <Play className="mr-2 h-4 w-4" />
-          {isRerunning ? "Running..." : "Rerun Test"}
+          {isRerunning ? <Clock className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4 fill-current" />}
+          {isRerunning ? "Rerunning..." : "Rerun Test"}
         </Button>
-        <Button size="sm" onClick={onCopyCommand} variant="outline">
-          <Copy className="mr-2 h-4 w-4" />
-          Copy Run Command
+
+        {test.errorLog && (
+          <Button
+            size="sm"
+            onClick={handleAnalysis}
+            className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-sm shadow-indigo-500/20 transition-all active:scale-95 border-0"
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Analyze with AI
+          </Button>
+        )}
+
+        <div className="hidden sm:block h-6 w-px bg-border/50 mx-1" />
+
+        <Button size="sm" onClick={onCopyCommand} variant="outline" className="border-border/50 hover:bg-muted/50 transition-colors">
+          <Copy className="mr-2 h-3.5 w-3.5" />
+          Copy Command
         </Button>
+
         {test.errorLog && (
           <>
-            <Button size="sm" onClick={handleAnalysis}>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Analyze with AI
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setIsIssueOpen(true)}>
-              <Ticket className="mr-2 h-4 w-4" />
+            <Button size="sm" variant="outline" className="border-border/50 hover:bg-muted/50 transition-colors" onClick={() => setIsIssueOpen(true)}>
+              <Ticket className="mr-2 h-3.5 w-3.5" />
               Create Issue
             </Button>
-            <Button size="sm" variant="outline" onClick={() => onCopyLog(test.errorLog || '')}>
-              <Copy className="mr-2 h-4 w-4" />
+            <Button size="sm" variant="outline" className="border-border/50 hover:bg-muted/50 transition-colors" onClick={() => onCopyLog(test.errorLog || '')}>
+              <Copy className="mr-2 h-3.5 w-3.5" />
               Copy Log
             </Button>
           </>
@@ -434,177 +444,234 @@ export function TestDetails({ run, flakyTestNames = new Set() }: TestDetailsProp
 
 
   return (
-    <Card className="print-break-inside-avoid">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-          <div>
-            <CardTitle>Test Details</CardTitle>
-            <CardDescription>
-              Explore the results of each individual test from this run. Failed tests are expanded by default.
-            </CardDescription>
+    <Card className="print-break-inside-avoid border-border/50 bg-card/50">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-start gap-3">
+            <div className="rounded-lg bg-primary/10 p-2 mt-1">
+              <FileText className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-xl font-bold">Test Details</CardTitle>
+              <CardDescription className="max-w-2xl mt-1 leading-relaxed">
+                Explore individual test results. Analyze failures with AI, view stack traces, and examine attachments.
+              </CardDescription>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleExpandAll} disabled={filteredAndSortedTests.length === 0}>
-              <ChevronsUpDown className="mr-2 h-4 w-4" />
+          <div className="flex items-center gap-2 self-start lg:self-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExpandAll}
+              disabled={filteredAndSortedTests.length === 0}
+              className="h-8 border-border/50 hover:bg-muted/50"
+            >
+              <ChevronsUpDown className="mr-2 h-3.5 w-3.5" />
               Expand All
             </Button>
-            <Button variant="outline" size="sm" onClick={handleCollapseAll} disabled={openItems.length === 0}>
-              <ChevronsRightLeft className="mr-2 h-4 w-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCollapseAll}
+              disabled={openItems.length === 0}
+              className="h-8 border-border/50 hover:bg-muted/50"
+            >
+              <ChevronsRightLeft className="mr-2 h-3.5 w-3.5" />
               Collapse All
             </Button>
           </div>
         </div>
-        <div className="mt-4 flex flex-col sm:flex-row items-center gap-2">
-          <div className="relative w-full sm:w-auto sm:flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search tests by name..."
-              className="pl-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <Filter className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="passed">Passed</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
-              <SelectItem value="skipped">Skipped</SelectItem>
-              <SelectItem value="interrupted">Interrupted</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sort} onValueChange={(value) => setSort(value as any)}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              {sort.endsWith('-asc') ? <SortAsc className="mr-2 h-4 w-4" /> : <SortDesc className="mr-2 h-4 w-4" />}
-              <SelectValue placeholder="Sort tests" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Default Order</SelectItem>
-              <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-              <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-              <SelectItem value="duration-asc">Duration (Shortest First)</SelectItem>
-              <SelectItem value="duration-desc">Duration (Longest First)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+
+
       </CardHeader>
       <CardContent>
         {filteredAndSortedTests.length > 0 ? (
-          <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="w-full space-y-2">
+          <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="w-full space-y-3">
             {filteredAndSortedTests.map((test) => {
               const isFlaky = flakyTestNames.has(test.name);
+              const statusColor =
+                test.status === 'passed' ? 'border-l-green-500' :
+                  test.status === 'failed' ? 'border-l-red-500' :
+                    test.status === 'skipped' ? 'border-l-yellow-500' : 'border-l-gray-500';
+
               return (
-                <AccordionItem value={test.id} key={test.id} className="border rounded-lg overflow-hidden">
-                  <AccordionTrigger className="px-4 py-3 bg-secondary/30 hover:bg-secondary/60 [&[data-state=open]>svg]:rotate-180">
-                    <div className="flex items-center gap-3 flex-1 text-left">
-                      <StatusIcon status={test.status} />
-                      <span className="font-medium flex-1">{test.name}</span>
-                      <div className="flex items-center gap-4">
-                        <span
+                <AccordionItem
+                  value={test.id}
+                  key={test.id}
+                  className={cn(
+                    "border border-border/40 rounded-lg overflow-hidden bg-card/30 transition-all hover:bg-card/50 hover:shadow-sm border-l-4",
+                    statusColor
+                  )}
+                >
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/5 group">
+                    <div className="flex items-center gap-3 flex-1 text-left min-w-0">
+                      <StatusIcon status={test.status} className="shrink-0" />
+                      <span className="font-semibold text-sm sm:text-base truncate pr-4">{test.name}</span>
+
+                      <div className="flex items-center gap-2 ml-auto shrink-0">
+                        {isIndividualRerunning === test.id && (
+                          <span className="animate-pulse text-xs font-medium text-muted-foreground mr-2">Running...</span>
+                        )}
+
+                        <div
                           role="button"
                           className={cn(
-                            "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-8 w-8 hover:bg-green-500/20 text-green-600 cursor-pointer",
-                            isIndividualRerunning === test.id && "animate-pulse",
-                            isIndividualRerunning !== null && "pointer-events-none opacity-50"
+                            "opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-full hover:bg-primary/10 text-primary focus:opacity-100 focus:outline-none",
+                            isIndividualRerunning === test.id && "opacity-100 animate-spin text-muted-foreground pointer-events-none"
                           )}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRerun(test.description.replace('Location: ', '').split(':')[0], test.name, test.id);
                           }}
-                          title="Quick Rerun"
+                          title="Rerun this test"
                         >
-                          <Play className={cn("h-4 w-4", isIndividualRerunning === test.id && "fill-current")} />
-                        </span>
+                          {isIndividualRerunning === test.id ? <Clock className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        </div>
+
                         {isFlaky && (
-                          <Badge variant='outline' className="border-orange-500/50 bg-orange-500/10 text-orange-700 dark:text-orange-400">
-                            <HelpCircle className="mr-1.5 h-3 w-3" />
+                          <Badge variant='outline' className="hidden sm:inline-flex border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400 font-normal">
+                            <HelpCircle className="mr-1 h-3 w-3" />
                             Flaky
                           </Badge>
                         )}
-                        <Badge variant='outline' className={getBadgeClasses(test.status)}>{test.status}</Badge>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Clock className="h-4 w-4" />
+
+                        <Badge variant='outline' className={cn("hidden sm:inline-flex font-medium capitalize", getBadgeClasses(test.status))}>
+                          {test.status}
+                        </Badge>
+
+                        <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground font-mono bg-muted/30 px-2 py-1 rounded">
+                          <Clock className="h-3 w-3" />
                           <span>{test.duration > 0 ? `${test.duration}ms` : '-'}</span>
                         </div>
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="p-4 bg-background">
-                    <Tabs defaultValue="details">
-                      <TabsList className="mb-4">
-                        <TabsTrigger value="details">Details</TabsTrigger>
-                        {(test.status === 'failed' || test.status === 'interrupted') && <TabsTrigger value="analysis">Analysis &amp; Actions</TabsTrigger>}
-                        {test.attachments && test.attachments.length > 0 && <TabsTrigger value="attachments">Attachments</TabsTrigger>}
-                      </TabsList>
+                  <AccordionContent className="p-0">
+                    <div className="border-t border-border/40 bg-muted/10 p-4 sm:p-6">
+                      <Tabs defaultValue="details" className="w-full">
+                        <TabsList className="w-full justify-start h-auto p-0 bg-transparent border-b border-border/40 mb-6 gap-6 rounded-none">
+                          <TabsTrigger
+                            value="details"
+                            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2 px-0"
+                          >
+                            Details
+                          </TabsTrigger>
+                          {(test.status === 'failed' || test.status === 'interrupted') && (
+                            <TabsTrigger
+                              value="analysis"
+                              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2 px-0"
+                            >
+                              Analysis & Actions
+                            </TabsTrigger>
+                          )}
+                          {test.attachments && test.attachments.length > 0 && (
+                            <TabsTrigger
+                              value="attachments"
+                              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none py-2 px-0"
+                            >
+                              Attachments
+                            </TabsTrigger>
+                          )}
+                        </TabsList>
 
-                      <TabsContent value="details">
-                        <div className="space-y-4">
-                          <div className="flex items-start gap-3 text-sm">
-                            <FileText className="h-4 w-4 mt-1 shrink-0 text-muted-foreground" />
-                            <div className="flex flex-col">
-                              <span className="font-semibold">Location</span>
-                              <span className="text-muted-foreground font-mono text-xs">{test.description.replace('Location: ', '')}</span>
-                            </div>
-                          </div>
-                          {(test.status === 'failed' || test.status === 'interrupted') && test.error && (
-                            <div className="flex items-start gap-3 text-sm">
-                              <XCircle className="h-4 w-4 mt-1 shrink-0 text-destructive" />
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-destructive">Failure Reason</span>
-                                <p className="text-sm text-destructive/90 font-mono bg-destructive/10 p-3 rounded-md mt-1">{test.error}</p>
+                        <TabsContent value="details" className="mt-0 space-y-6">
+                          <Card className="border-border/40 shadow-sm">
+                            <CardContent className="p-4 space-y-4">
+                              <div className="grid gap-1">
+                                <h4 className="text-sm font-medium text-muted-foreground">Test Location</h4>
+                                <div className="flex items-center gap-2 font-mono text-sm bg-muted/50 p-2 rounded border border-border/50">
+                                  <FileText className="h-4 w-4 text-muted-foreground" />
+                                  {test.description.replace('Location: ', '')}
+                                </div>
+                              </div>
+                              {(test.status === 'failed' || test.status === 'interrupted') && test.error && (
+                                <div className="grid gap-2">
+                                  <h4 className="text-sm font-medium text-destructive flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4" />
+                                    Error Message
+                                  </h4>
+                                  <div className="bg-destructive/5 border border-destructive/20 text-destructive text-sm font-mono p-4 rounded-lg overflow-x-auto whitespace-pre-wrap">
+                                    {test.error}
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+
+                        <TabsContent value="analysis" className="mt-0">
+                          {(test.status === 'failed' || test.status === 'interrupted') && (
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-medium text-muted-foreground">Recommended Actions</h3>
+                              </div>
+                              <div className="bg-card border border-border/50 rounded-xl p-6 shadow-sm">
+                                <TestActions
+                                  test={test}
+                                  onRerun={handleRerun}
+                                  isRerunning={isIndividualRerunning === test.id}
+                                  onCopyLog={handleCopyLog}
+                                  onCopyCommand={() => handleCopyCommand(test)}
+                                />
                               </div>
                             </div>
                           )}
-                        </div>
-                      </TabsContent>
+                        </TabsContent>
 
-                      <TabsContent value="analysis">
-                        {(test.status === 'failed' || test.status === 'interrupted') && (
-                          <div className="space-y-4">
-                            <p className="text-sm text-muted-foreground">Actions for this test failure.</p>
-                            <TestActions
-                              test={test}
-                              onRerun={handleRerun}
-                              isRerunning={isIndividualRerunning === test.id}
-                              onCopyLog={handleCopyLog}
-                              onCopyCommand={() => handleCopyCommand(test)}
-                            />
-                          </div>
-                        )}
-                      </TabsContent>
+                        <TabsContent value="attachments" className="mt-0">
+                          {test.attachments && test.attachments.length > 0 && (
+                            <div className="grid grid-cols-1 gap-6">
+                              {test.attachments.map((att, i) => (
+                                <Card key={i} className="overflow-hidden border-border/50">
+                                  <CardHeader className="p-3 bg-muted/30 border-b border-border/50">
+                                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                      <FileText className="h-4 w-4" />
+                                      {att.description || "Attachment"}
+                                    </CardTitle>
+                                  </CardHeader>
+                                  <CardContent className="p-0 bg-zinc-950/5 dark:bg-zinc-900/50">
+                                    <div className="relative aspect-video w-full flex items-center justify-center">
+                                      <Image
+                                        src={getSafeAttachmentPath(att)}
+                                        alt={att.description}
+                                        width={1200}
+                                        height={800}
+                                        className="w-full h-auto object-contain max-h-[500px]"
+                                      />
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          )}
+                        </TabsContent>
 
-                      <TabsContent value="attachments">
-                        {test.attachments && test.attachments.length > 0 && (
-                          <div className="space-y-4">
-                            {test.attachments.map((att, i) => (
-                              <div key={i} className="border rounded-lg overflow-hidden max-w-2xl shadow-sm">
-                                <p className="p-2 text-sm text-muted-foreground bg-secondary/50 font-medium">{att.description}</p>
-                                <div className="bg-muted">
-                                  <Image data-ai-hint="test screenshot" src={getSafeAttachmentPath(att)} alt={att.description} width={1280} height={720} className="w-full h-auto" />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </TabsContent>
-
-                    </Tabs>
+                      </Tabs>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               )
             })}
           </Accordion>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-12 text-center">
-            <Search className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-6 text-xl font-semibold text-foreground">No matching tests found</h3>
-            <p className="mt-1 text-base text-muted-foreground">
-              Try adjusting your search or filter criteria to see more results.
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/5 p-16 text-center animate-in fade-in-50">
+            <div className="rounded-full bg-muted/20 p-4 mb-4">
+              <Search className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">No matching tests found</h3>
+            <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
+              We couldn't find any tests matching your current search or filter criteria. Try clearing them to see more results.
             </p>
+            <Button
+              variant="outline"
+              className="mt-6"
+              onClick={() => {
+                setSearchTerm("");
+                setFilter("all");
+              }}
+            >
+              Clear all filters
+            </Button>
           </div>
         )}
       </CardContent>
