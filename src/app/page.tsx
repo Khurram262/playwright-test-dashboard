@@ -385,25 +385,49 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/60 shadow-sm">
-        <div className="flex h-16 items-center gap-4 px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Logo className="h-9 w-9 text-primary drop-shadow-lg" />
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full -z-10"></div>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                Playwright Report Dashboard
-              </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">Real-time Test Monitoring</p>
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 print:hidden">
+        <div className="max-w-[1800px] mx-auto w-full h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+
+          {/* Left Section: Identity */}
+          <div className="flex items-center gap-5">
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 will-change-[opacity]" />
+                <Logo className="relative h-8 w-8 text-primary drop-shadow-sm transition-transform duration-300 group-hover:scale-110" />
+              </div>
+              <div className="hidden md:flex flex-col">
+                <span className="text-sm font-bold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  Playwright Dashboard
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono leading-none tracking-wide">
+                  TEST MONITOR
+                </span>
+              </div>
+            </Link>
+
+            <div className="h-8 w-px bg-border/40 hidden md:block rotate-12 mx-1" />
+
+            {/* Quick Status / Breadcrumb */}
+            <div className="hidden md:flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/30 border border-border/40 text-xs font-medium text-muted-foreground">
+                <span className="relative flex h-2 w-2">
+                  <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", isRunning ? "bg-green-400" : "hidden")}></span>
+                  <span className={cn("relative inline-flex rounded-full h-2 w-2", isRunning ? "bg-green-500" : "bg-zinc-400")}></span>
+                </span>
+                {isRunning ? "Running" : "Idle"}
+              </div>
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+
+
+          {/* Right Section: Actions */}
+          <div className="flex items-center gap-2 sm:gap-4">
+
+            {/* Search Bar - Desktop */}
             <Button
               variant="outline"
               size="sm"
-              className="hidden lg:flex items-center gap-2 text-muted-foreground w-40 justify-between px-3"
+              className="hidden lg:flex items-center justify-between w-64 h-9 bg-muted/20 border-border/40 text-muted-foreground hover:bg-muted/40 hover:text-foreground hover:border-border/60 transition-all font-normal shadow-sm"
               onClick={() => {
                 const event = new KeyboardEvent('keydown', {
                   key: 'k',
@@ -414,67 +438,85 @@ export default function Home() {
                 document.dispatchEvent(event);
               }}
             >
-              <div className="flex items-center gap-2">
-                <Search className="h-4 w-4" />
-                <span>Search...</span>
-              </div>
-              <kbd className="pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 flex">
+              <span className="flex items-center gap-2 text-xs">
+                <Search className="h-3.5 w-3.5" />
+                Find tests...
+              </span>
+              <kbd className="pointer-events-none h-5 select-none items-center gap-1 rounded border bg-background/50 px-1.5 font-mono text-[10px] font-medium opacity-70 shadow-sm">
                 <span className="text-xs">⌘</span>K
               </kbd>
             </Button>
+
+            {/* Mobile Search Icon */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden text-muted-foreground"
+              onClick={() => {
+                const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, metaKey: true, bubbles: true });
+                document.dispatchEvent(event);
+              }}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+
             {canShowNotificationButton && (
-              <Button variant="outline" size="sm" onClick={requestNotificationPermission}>
-                <Bell className="mr-2 h-4 w-4" />
-                Enable Notifications
+              <Button variant="ghost" size="icon" onClick={requestNotificationPermission} className="text-muted-foreground hover:text-foreground relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
               </Button>
             )}
+
             {runs.length > 0 && (
               <Button
-                variant={showLiveTests ? "default" : "outline"}
+                variant="ghost"
                 size="sm"
                 onClick={() => setShowLiveTests(!showLiveTests)}
-              >
-                {showLiveTests ? (
-                  <>
-                    <EyeOff className="mr-2 h-4 w-4" />
-                    Hide Live Tests
-                  </>
-                ) : (
-                  <>
-                    <Monitor className="mr-2 h-4 w-4" />
-                    Show Live Tests
-                  </>
+                className={cn(
+                  "hidden sm:flex h-9 px-3 transition-all",
+                  showLiveTests ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-muted-foreground hover:text-foreground"
                 )}
+              >
+                {showLiveTests ? <EyeOff className="h-4 w-4 mr-2" /> : <Monitor className="h-4 w-4 mr-2" />}
+                <span className="hidden xl:inline">{showLiveTests ? 'Hide Live View' : 'Show Live View'}</span>
               </Button>
             )}
+
+            <div className="h-6 w-px bg-border/40 mx-2 hidden sm:block" />
+
             <ThemeSwitcher />
-            <div className="hidden sm:flex items-center gap-2">
 
-
+            <div className="hidden sm:flex items-center gap-2 pl-2">
               <Button
                 onClick={handleRunAll}
                 disabled={isRunning}
-                variant="default"
-                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg shadow-green-500/20 disabled:opacity-50"
+                className="h-9 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-[0_4px_14px_0_rgba(16,185,129,0.3)] border-0 transition-all active:scale-95 text-xs font-semibold px-4 rounded-full"
               >
-                <Play className="mr-2 h-4 w-4" />
-                Run All Tests
+                {isRunning ? <div className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> : <Play className="mr-2 h-3.5 w-3.5 fill-current" />}
+                Run All
               </Button>
-              <Button
-                onClick={handleStopRun}
-                variant="outline"
-                className="text-red-600 border-red-300 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950/30 dark:text-red-400"
-              >
-                Stop Tests
-              </Button>
+
+              {isRunning && (
+                <Button
+                  onClick={handleStopRun}
+                  variant="destructive"
+                  size="icon"
+                  className="h-9 w-9 rounded-full shadow-md"
+                  title="Stop Tests"
+                >
+                  <div className="h-3 w-3 rounded-sm bg-white" />
+                </Button>
+              )}
+
               <Button
                 onClick={handleExport}
-                variant="outline"
                 disabled={runs.length === 0}
-                className="border-primary/30 hover:border-primary/50 hover:bg-primary/5"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-full"
+                title="Export JSON"
               >
-                <Download className="mr-2 h-4 w-4" />
-                Export
+                <Download className="h-4 w-4" />
               </Button>
             </div>
           </div>
