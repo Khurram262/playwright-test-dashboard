@@ -251,10 +251,10 @@ export function AIInsights({ runs }: AIInsightsProps) {
     };
 
     return (
-        <div className="space-y-6 relative">
+        <div className="space-y-6 relative overflow-hidden rounded-xl p-1">
             {/* Background Glow */}
-            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-72 h-72 bg-purple-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-500/5 rounded-full blur-3xl -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
             {/* Main Header Card */}
             <Card className="border-border/40 bg-gradient-to-br from-card/80 via-card/50 to-muted/20 backdrop-blur-md shadow-sm overflow-hidden relative">
@@ -262,17 +262,17 @@ export function AIInsights({ runs }: AIInsightsProps) {
                 <CardHeader>
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="relative">
+                            <div className="relative shrink-0">
                                 <div className="absolute inset-0 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl blur opacity-30" />
                                 <div className="relative rounded-xl bg-gradient-to-br from-violet-100 to-indigo-50 dark:from-violet-950/50 dark:to-indigo-900/50 p-3 border border-indigo-100 dark:border-indigo-800">
                                     <Bot className="h-6 w-6 text-violet-600 dark:text-violet-300" />
                                 </div>
                             </div>
-                            <div>
-                                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
+                            <div className="min-w-0">
+                                <CardTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent truncate">
                                     AI-Powered Insights
                                 </CardTitle>
-                                <CardDescription className="text-sm font-medium text-muted-foreground/80 mt-1">
+                                <CardDescription className="text-xs sm:text-sm font-medium text-muted-foreground/80 mt-1 truncate">
                                     Analyzing <span className="text-foreground">{failedTests.length} failures</span> across <span className="text-foreground">{runs.length} runs</span>
                                 </CardDescription>
                             </div>
@@ -282,13 +282,13 @@ export function AIInsights({ runs }: AIInsightsProps) {
                                 onClick={runBatchAnalysis}
                                 disabled={isAnalyzing}
                                 className={cn(
-                                    "relative overflow-hidden group border-0 shadow-lg transition-all active:scale-95",
+                                    "relative overflow-hidden group border-0 shadow-lg transition-all active:scale-95 shrink-0",
                                     "bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-500 hover:via-indigo-500 hover:to-purple-500 text-white"
                                 )}
                             >
                                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                                 <Sparkles className={cn("mr-2 h-4 w-4 transition-transform group-hover:rotate-12", isAnalyzing && "animate-spin")} />
-                                <span>{isAnalyzing ? 'Analyzing Logs...' : 'Analyze Failures'}</span>
+                                <span>{isAnalyzing ? 'Analyzing...' : 'Analyze Failures'}</span>
                             </Button>
                         )}
                     </div>
