@@ -628,7 +628,7 @@ export function TestDetails({ run, flakyTestNames = new Set() }: TestDetailsProp
                         <TabsContent value="attachments" className="mt-0">
                           {test.attachments && test.attachments.length > 0 && (
                             <div className="grid grid-cols-1 gap-6">
-                              {test.attachments.map((att, i) => (
+                              {test.attachments.map((att: TestAttachment, i: React.Key | null | undefined) => (
                                 <Card key={i} className="overflow-hidden border-border/50">
                                   <CardHeader className="p-3 bg-muted/30 border-b border-border/50">
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
