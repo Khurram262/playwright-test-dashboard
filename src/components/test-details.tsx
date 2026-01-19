@@ -411,7 +411,14 @@ export function TestDetails({ run, flakyTestNames = new Set() }: TestDetailsProp
   };
 
   const filteredAndSortedTests = React.useMemo(() => {
-    let tests = [...run.tests];
+    // Deduplicate tests by ID to prevent key collisions
+    const uniqueTests = new Map();
+    run.tests.forEach((test) => {
+      if (!uniqueTests.has(test.id)) {
+        uniqueTests.set(test.id, test);
+      }
+    });
+    let tests = Array.from(uniqueTests.values());
 
     if (searchTerm) {
       tests = tests.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()));
