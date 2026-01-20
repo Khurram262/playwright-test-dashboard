@@ -35,7 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { Logo } from "@/components/screens/logo";
-import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, Play, Bell, GitMerge, Monitor, EyeOff, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Download, Clipboard, FileText, Trash2, HelpCircle, Play, Bell, GitMerge, Monitor, EyeOff, Search, ChevronLeft, ChevronRight, Calendar, Hash, Activity, Layers, Clock, Filter } from "lucide-react";
 import type { TestRun, Test, TestStatus, TestAttachment } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { cn, getTestRunSummary, getFlakyTests } from "@/lib/utils";
@@ -606,34 +606,59 @@ export default function Home() {
             {/* AI Insights Section */}
             {sortedRuns.length > 0 && <AIInsights runs={sortedRuns} />}
 
-            <Card className="border-border/50 bg-card/50">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <FileText className="h-5 w-5 text-primary" />
+            {/* Premium Test Runs Section */}
+            <Card className="border-border/40 bg-card/60 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader className="border-b border-border/30 bg-muted/5 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center ring-1 ring-primary/20 shadow-sm">
+                      <Layers className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                        Test History
+                      </CardTitle>
+                      <CardDescription className="text-sm">
+                        Comprehensive log of {sortedRuns.length} execution{sortedRuns.length !== 1 ? 's' : ''}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold">All Test Runs</CardTitle>
-                    <CardDescription className="text-sm">
-                      Complete history of {sortedRuns.length} test execution{sortedRuns.length !== 1 ? 's' : ''}
-                    </CardDescription>
+
+                  {/* Optional: Filter Actions could go here */}
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-background/50 text-xs font-mono">
+                      Total: {runs.length}
+                    </Badge>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader>
-                      <TableRow className="border-b border-border/50">
-                        <TableHead className="font-semibold">Run ID</TableHead>
-                        <TableHead className="hidden md:table-cell font-semibold">Execution Date</TableHead>
-                        <TableHead className="font-semibold">Total</TableHead>
-                        <TableHead className="font-semibold">Passed</TableHead>
-                        <TableHead className="font-semibold">Failed</TableHead>
-                        <TableHead className="font-semibold">Skipped</TableHead>
-                        <TableHead className="font-semibold">Interrupted</TableHead>
-                        <TableHead className="font-semibold">Flaky</TableHead>
-                        <TableHead className="text-right font-semibold">Actions</TableHead>
+                    <TableHeader className="bg-muted/10 backdrop-blur-sm">
+                      <TableRow className="border-b border-border/40 hover:bg-transparent">
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground w-[180px]">
+                          <div className="flex items-center gap-1.5">
+                            <Hash className="h-3.5 w-3.5" />
+                            Run ID
+                          </div>
+                        </TableHead>
+                        <TableHead className="hidden md:table-cell font-semibold text-xs uppercase tracking-wider text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5" />
+                            Executed
+                          </div>
+                        </TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground text-center">Total</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground text-center">Passed</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground text-center">Failed</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground text-center">Skipped</TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground text-center">
+                          <span className="hidden lg:inline">Interrupted</span>
+                          <span className="lg:hidden">Int.</span>
+                        </TableHead>
+                        <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground text-center">Flaky</TableHead>
+                        <TableHead className="text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground pr-6">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -643,42 +668,70 @@ export default function Home() {
                         return (
                           <TableRow
                             key={run.runId}
-                            className="hover:bg-muted/30 transition-colors border-b border-border/30"
+                            className="hover:bg-muted/30 transition-colors border-b border-border/30 group"
                           >
-                            <TableCell className="font-mono text-xs">{run.runId.substring(0, 15)}...</TableCell>
-                            <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                              {new Date(run.executionDate).toLocaleString()}
+                            <TableCell className="font-mono text-xs font-medium text-foreground py-4">
+                              <div className="flex items-center gap-2">
+                                <span className="bg-muted px-1.5 py-0.5 rounded text-[10px] text-muted-foreground">ID</span>
+                                {run.runId.substring(0, 8)}...
+                              </div>
                             </TableCell>
-                            <TableCell className="font-semibold text-sm">{summary.total}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn(getStatusBadgeClasses('passed'), summary.passed > 0 && 'font-semibold')}>
+                            <TableCell className="hidden md:table-cell text-xs text-muted-foreground py-4">
+                              <div className="flex flex-col">
+                                <span className="text-foreground font-medium">{new Date(run.executionDate).toLocaleDateString()}</span>
+                                <span className="text-[10px] opacity-70">{new Date(run.executionDate).toLocaleTimeString()}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center font-semibold text-sm py-4">{summary.total}</TableCell>
+                            <TableCell className="text-center py-4">
+                              <div className={cn("inline-flex items-center justify-center min-w-[32px] h-6 rounded px-1.5 text-xs font-medium border transition-all",
+                                summary.passed > 0
+                                  ? "bg-green-500/10 text-green-700 border-green-200 dark:bg-green-500/20 dark:text-green-300 dark:border-green-800"
+                                  : "bg-muted/30 text-muted-foreground border-transparent"
+                              )}>
                                 {summary.passed}
-                              </Badge>
+                              </div>
                             </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn(getStatusBadgeClasses('failed'), summary.failed > 0 && 'font-semibold')}>
+                            <TableCell className="text-center py-4">
+                              <div className={cn("inline-flex items-center justify-center min-w-[32px] h-6 rounded px-1.5 text-xs font-medium border transition-all",
+                                summary.failed > 0
+                                  ? "bg-red-500/10 text-red-700 border-red-200 dark:bg-red-500/20 dark:text-red-300 dark:border-red-800 shadow-sm"
+                                  : "bg-muted/30 text-muted-foreground border-transparent"
+                              )}>
                                 {summary.failed}
-                              </Badge>
+                              </div>
                             </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn(getStatusBadgeClasses('skipped'), summary.skipped > 0 && 'font-semibold')}>
+                            <TableCell className="text-center py-4">
+                              <div className={cn("inline-flex items-center justify-center min-w-[32px] h-6 rounded px-1.5 text-xs font-medium border transition-all",
+                                summary.skipped > 0
+                                  ? "bg-yellow-500/10 text-yellow-700 border-yellow-200 dark:bg-yellow-500/20 dark:text-yellow-300 dark:border-yellow-800"
+                                  : "bg-muted/30 text-muted-foreground border-transparent"
+                              )}>
                                 {summary.skipped}
-                              </Badge>
+                              </div>
                             </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn(getStatusBadgeClasses('interrupted'), summary.interrupted > 0 && 'font-semibold')}>
+                            <TableCell className="text-center py-4">
+                              <div className={cn("inline-flex items-center justify-center min-w-[32px] h-6 rounded px-1.5 text-xs font-medium border transition-all",
+                                summary.interrupted > 0
+                                  ? "bg-gray-500/10 text-gray-700 border-gray-200 dark:bg-gray-500/20 dark:text-gray-300 dark:border-gray-800"
+                                  : "bg-muted/30 text-muted-foreground border-transparent"
+                              )}>
                                 {summary.interrupted}
-                              </Badge>
+                              </div>
                             </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn('border-orange-500/60 bg-orange-500/15 text-orange-700 dark:border-orange-400/50 dark:bg-orange-400/10 dark:text-orange-300', flakyInRun > 0 && 'font-semibold')}>
+                            <TableCell className="text-center py-4">
+                              <div className={cn("inline-flex items-center justify-center min-w-[32px] h-6 rounded px-1.5 text-xs font-medium border transition-all",
+                                flakyInRun > 0
+                                  ? "bg-orange-500/10 text-orange-700 border-orange-200 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-800"
+                                  : "bg-muted/30 text-muted-foreground border-transparent"
+                              )}>
                                 {flakyInRun}
-                              </Badge>
+                              </div>
                             </TableCell>
-                            <TableCell className="text-right">
-                              <Button asChild variant="ghost" size="sm" className="h-8 text-xs hover:bg-primary/10">
-                                <Link href={`/run/${run.runId}`}>
-                                  View <ArrowRight className="ml-1 h-3 w-3" />
+                            <TableCell className="text-right py-4 pr-6">
+                              <Button asChild variant="ghost" size="sm" className="h-8 w-24 text-xs font-medium group-hover:bg-primary/5 group-hover:text-primary transition-all border border-transparent group-hover:border-primary/20">
+                                <Link href={`/run/${run.runId}`} className="flex items-center justify-between w-full">
+                                  Details <ArrowRight className="h-3 w-3 opacity-50 group-hover:translate-x-1 group-hover:opacity-100 transition-all" />
                                 </Link>
                               </Button>
                             </TableCell>
@@ -689,13 +742,13 @@ export default function Home() {
                   </Table>
                 </div>
 
-                {/* Pagination Controls */}
+                {/* Modern Pagination Controls */}
                 {totalPages >= 1 && (
-                  <div className="flex items-center justify-between border-t border-border/30 bg-muted/20 px-6 py-4">
+                  <div className="flex items-center justify-between border-t border-border/40 bg-muted/10 px-6 py-4">
                     {/* Left side - Rows per page */}
                     <div className="flex items-center gap-3">
-                      <span className="text-xs font-semibold text-muted-foreground">
-                        Rows per page
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Show
                       </span>
                       <Select
                         value={itemsPerPage.toString()}
@@ -704,51 +757,49 @@ export default function Home() {
                           setCurrentPage(1);
                         }}
                       >
-                        <SelectTrigger className="h-8 w-[70px] border-border/50">
+                        <SelectTrigger className="h-7 w-[65px] border-border/40 text-xs bg-background/50">
                           <SelectValue placeholder={itemsPerPage.toString()} />
                         </SelectTrigger>
                         <SelectContent side="top">
                           {[10, 25, 50, 100].map((pageSize) => (
-                            <SelectItem
-                              key={pageSize}
-                              value={pageSize.toString()}
-                            >
+                            <SelectItem key={pageSize} value={pageSize.toString()}>
                               {pageSize}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      <span className="text-xs font-medium text-muted-foreground hidden sm:inline">
+                        rows
+                      </span>
                     </div>
 
                     {/* Center - Page info */}
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-muted-foreground">Page</span>
-                      <span className="font-semibold">{currentPage}</span>
-                      <span className="text-muted-foreground">of</span>
-                      <span className="font-semibold">{totalPages}</span>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span>Page</span>
+                      <span className="font-semibold text-foreground">{currentPage}</span>
+                      <span>of</span>
+                      <span className="font-semibold text-foreground">{totalPages}</span>
                     </div>
 
                     {/* Right side - Navigation buttons */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className="h-8"
+                        className="h-7 w-7"
                       >
-                        <ChevronLeft className="mr-1 h-4 w-4" />
-                        Previous
+                        <ChevronLeft className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className="h-8"
+                        className="h-7 w-7"
                       >
-                        Next
-                        <ChevronRight className="ml-1 h-4 w-4" />
+                        <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
