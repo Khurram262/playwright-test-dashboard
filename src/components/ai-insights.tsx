@@ -252,28 +252,31 @@ export function AIInsights({ runs }: AIInsightsProps) {
 
     return (
         <div className="space-y-6 relative overflow-hidden rounded-xl p-1">
-            {/* Background Glow */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-500/5 rounded-full blur-3xl -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+            {/* Enhanced Background Glow */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-violet-500/10 via-purple-500/10 to-pink-500/10 rounded-full blur-3xl -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none opacity-60" />
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-indigo-500/10 via-blue-500/10 to-cyan-500/10 rounded-full blur-3xl -z-10 -translate-x-1/3 translate-y-1/3 pointer-events-none opacity-60" />
 
             {/* Main Header Card */}
-            <Card className="border-border/40 bg-gradient-to-br from-card/80 via-card/50 to-muted/20 backdrop-blur-md shadow-sm overflow-hidden relative">
-                <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
-                <CardHeader>
+            <Card className="group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/95 via-card/90 to-muted/40 backdrop-blur-xl shadow-2xl transition-all duration-500 hover:shadow-violet-500/10 hover:border-violet-500/40">
+                {/* Enhanced Decorative Elements */}
+                <div className="absolute -right-12 -top-12 h-56 w-56 bg-gradient-to-br from-violet-500/10 via-purple-500/10 to-pink-500/10 blur-3xl rounded-full opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+                <div className="absolute right-20 top-20 h-32 w-32 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 blur-2xl rounded-full" />
+
+                <CardHeader className="relative pb-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <div className="relative shrink-0">
-                                <div className="absolute inset-0 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl blur opacity-30" />
-                                <div className="relative rounded-xl bg-gradient-to-br from-violet-100 to-indigo-50 dark:from-violet-950/50 dark:to-indigo-900/50 p-3 border border-indigo-100 dark:border-indigo-800">
-                                    <Bot className="h-6 w-6 text-violet-600 dark:text-violet-300" />
+                                <div className="relative rounded-2xl bg-gradient-to-br from-violet-500/20 via-purple-500/20 to-indigo-500/20 p-3.5 shadow-xl backdrop-blur-sm border border-violet-500/20">
+                                    <Bot className="h-7 w-7 text-violet-400" />
+                                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500/10 to-purple-500/10 blur-xl" />
                                 </div>
                             </div>
-                            <div className="min-w-0">
-                                <CardTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent truncate">
+                            <div className="min-w-0 flex-1">
+                                <CardTitle className="text-xl sm:text-2xl font-black tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                                     AI-Powered Insights
                                 </CardTitle>
-                                <CardDescription className="text-xs sm:text-sm font-medium text-muted-foreground/80 mt-1 truncate">
-                                    Analyzing <span className="text-foreground">{failedTests.length} failures</span> across <span className="text-foreground">{runs.length} runs</span>
+                                <CardDescription className="text-xs sm:text-sm font-bold mt-1 text-muted-foreground/80">
+                                    Analyzing <span className="text-violet-500 font-black">{failedTests.length} failures</span> across <span className="text-violet-500 font-black">{runs.length} runs</span>
                                 </CardDescription>
                             </div>
                         </div>
@@ -282,13 +285,14 @@ export function AIInsights({ runs }: AIInsightsProps) {
                                 onClick={runBatchAnalysis}
                                 disabled={isAnalyzing}
                                 className={cn(
-                                    "relative overflow-hidden group border-0 shadow-lg transition-all active:scale-95 shrink-0",
-                                    "bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-500 hover:via-indigo-500 hover:to-purple-500 text-white"
+                                    "relative overflow-hidden group border-0 shadow-xl transition-all active:scale-95 shrink-0 h-11 px-6",
+                                    "bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:via-purple-500 hover:to-indigo-500 text-white font-bold",
+                                    "disabled:opacity-50 disabled:cursor-not-allowed"
                                 )}
                             >
-                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                                <Sparkles className={cn("mr-2 h-4 w-4 transition-transform group-hover:rotate-12", isAnalyzing && "animate-spin")} />
-                                <span>{isAnalyzing ? 'Analyzing...' : 'Analyze Failures'}</span>
+                                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                                <Sparkles className={cn("mr-2 h-4 w-4 transition-transform group-hover:scale-110 relative z-10", isAnalyzing && "animate-spin")} />
+                                <span className="relative z-10">{isAnalyzing ? 'Analyzing...' : 'Analyze Failures'}</span>
                             </Button>
                         )}
                     </div>
@@ -301,27 +305,58 @@ export function AIInsights({ runs }: AIInsightsProps) {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         {insights.map((insight, index) => {
                             const styles = {
-                                success: { border: 'border-emerald-200 dark:border-emerald-900', bg: 'bg-emerald-50/50 dark:bg-emerald-950/20', icon: 'text-emerald-600 dark:text-emerald-400', iconBg: 'bg-emerald-100 dark:bg-emerald-900/50' },
-                                warning: { border: 'border-amber-200 dark:border-amber-900', bg: 'bg-amber-50/50 dark:bg-amber-950/20', icon: 'text-amber-600 dark:text-amber-400', iconBg: 'bg-amber-100 dark:bg-amber-900/50' },
-                                error: { border: 'border-red-200 dark:border-red-900', bg: 'bg-red-50/50 dark:bg-red-950/20', icon: 'text-red-600 dark:text-red-400', iconBg: 'bg-red-100 dark:bg-red-900/50' },
-                                info: { border: 'border-blue-200 dark:border-blue-900', bg: 'bg-blue-50/50 dark:bg-blue-950/20', icon: 'text-blue-600 dark:text-blue-400', iconBg: 'bg-blue-100 dark:bg-blue-900/50' }
+                                success: {
+                                    border: 'border-emerald-500/30',
+                                    bg: 'bg-gradient-to-br from-emerald-500/10 via-green-500/5 to-teal-500/10',
+                                    icon: 'text-emerald-400',
+                                    iconBg: 'bg-gradient-to-br from-emerald-500/20 to-green-500/20',
+                                    glow: 'from-emerald-500/10 to-green-500/10'
+                                },
+                                warning: {
+                                    border: 'border-amber-500/30',
+                                    bg: 'bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-yellow-500/10',
+                                    icon: 'text-amber-400',
+                                    iconBg: 'bg-gradient-to-br from-amber-500/20 to-orange-500/20',
+                                    glow: 'from-amber-500/10 to-orange-500/10'
+                                },
+                                error: {
+                                    border: 'border-red-500/30',
+                                    bg: 'bg-gradient-to-br from-red-500/10 via-rose-500/5 to-pink-500/10',
+                                    icon: 'text-red-400',
+                                    iconBg: 'bg-gradient-to-br from-red-500/20 to-rose-500/20',
+                                    glow: 'from-red-500/10 to-rose-500/10'
+                                },
+                                info: {
+                                    border: 'border-blue-500/30',
+                                    bg: 'bg-gradient-to-br from-blue-500/10 via-cyan-500/5 to-indigo-500/10',
+                                    icon: 'text-blue-400',
+                                    iconBg: 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20',
+                                    glow: 'from-blue-500/10 to-cyan-500/10'
+                                }
                             }[insight.type];
 
                             return (
                                 <motion.div
                                     key={insight.title}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.4, delay: index * 0.1 }}
                                 >
-                                    <div className={cn("h-full rounded-xl border p-4 shadow-sm backdrop-blur-sm transition-all hover:shadow-md", styles.border, styles.bg)}>
-                                        <div className="flex items-start gap-3">
-                                            <div className={cn("rounded-lg p-2 shrink-0", styles.iconBg)}>
+                                    <div className={cn(
+                                        "group h-full rounded-xl border p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:shadow-xl hover:scale-[1.02] relative overflow-hidden",
+                                        styles.border,
+                                        styles.bg
+                                    )}>
+                                        {/* Glow Effect */}
+                                        <div className={cn("absolute -right-8 -top-8 h-32 w-32 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br", styles.glow)} />
+
+                                        <div className="flex items-start gap-3 relative z-10">
+                                            <div className={cn("relative rounded-xl p-2.5 shrink-0 shadow-lg border border-white/10", styles.iconBg)}>
                                                 <insight.icon className={cn("h-5 w-5", styles.icon)} />
                                             </div>
-                                            <div>
-                                                <h4 className="font-semibold text-sm text-foreground">{insight.title}</h4>
-                                                <p className="text-xs text-muted-foreground mt-1 leading-snug">{insight.description}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-black text-sm text-foreground mb-1.5">{insight.title}</h4>
+                                                <p className="text-xs text-muted-foreground/90 leading-relaxed">{insight.description}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -333,23 +368,35 @@ export function AIInsights({ runs }: AIInsightsProps) {
             </AnimatePresence>
 
             {/* Detailed Tabs */}
-            <div className="rounded-xl border border-border/40 bg-background/40 backdrop-blur-xl shadow-sm p-1">
+            <div className="rounded-xl border border-border/40 bg-gradient-to-br from-card/95 via-card/90 to-muted/40 backdrop-blur-xl shadow-2xl p-1 relative overflow-hidden">
+                {/* Decorative Background */}
+                <div className="absolute -left-12 bottom-0 h-48 w-48 bg-gradient-to-br from-primary/5 to-violet-500/5 blur-3xl rounded-full opacity-60" />
+
                 <Tabs defaultValue="patterns" className="w-full">
-                    <div className="px-4 pt-4 pb-2">
-                        <TabsList className="w-full bg-muted/40 p-1 rounded-lg grid grid-cols-3 md:w-[400px]">
-                            <TabsTrigger value="patterns" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all text-xs font-medium">
-                                <BarChart3 className="h-3.5 w-3.5 mr-2" /> Patterns
+                    <div className="px-4 pt-4 pb-2 relative z-10">
+                        <TabsList className="w-full bg-muted/60 backdrop-blur-sm p-1.5 rounded-xl grid grid-cols-3 md:w-[420px] border border-border/30 shadow-lg">
+                            <TabsTrigger
+                                value="patterns"
+                                className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-background data-[state=active]:to-background/80 data-[state=active]:shadow-md transition-all text-xs font-bold rounded-lg"
+                            >
+                                <BarChart3 className="h-4 w-4 mr-2" /> Patterns
                             </TabsTrigger>
-                            <TabsTrigger value="batch" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all text-xs font-medium">
-                                <Brain className="h-3.5 w-3.5 mr-2" /> AI Deep Dive
+                            <TabsTrigger
+                                value="batch"
+                                className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-background data-[state=active]:to-background/80 data-[state=active]:shadow-md transition-all text-xs font-bold rounded-lg"
+                            >
+                                <Brain className="h-4 w-4 mr-2" /> AI Deep Dive
                             </TabsTrigger>
-                            <TabsTrigger value="recommendations" className="data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all text-xs font-medium">
-                                <Lightbulb className="h-3.5 w-3.5 mr-2" /> Suggestions
+                            <TabsTrigger
+                                value="recommendations"
+                                className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-background data-[state=active]:to-background/80 data-[state=active]:shadow-md transition-all text-xs font-bold rounded-lg"
+                            >
+                                <Lightbulb className="h-4 w-4 mr-2" /> Suggestions
                             </TabsTrigger>
                         </TabsList>
                     </div>
 
-                    <div className="p-4 sm:p-6 min-h-[400px]">
+                    <div className="p-4 sm:p-6 min-h-[400px] relative z-10">
                         <TabsContent value="patterns" className="mt-0 space-y-4 focus-visible:outline-none">
                             {patterns.length > 0 ? (
                                 <div className="grid gap-4 md:grid-cols-2">
@@ -359,32 +406,35 @@ export function AIInsights({ runs }: AIInsightsProps) {
                                             initial={{ opacity: 0, x: -10 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: index * 0.1 }}
-                                            className="group relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-card to-muted/20 p-5 hover:border-primary/20 transition-all"
+                                            className="group relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-card/90 to-muted/30 backdrop-blur-sm p-5 hover:border-primary/30 hover:shadow-lg transition-all duration-300"
                                         >
-                                            <div className="flex items-start justify-between mb-4">
+                                            {/* Hover Glow */}
+                                            <div className="absolute -right-8 -top-8 h-32 w-32 bg-primary/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                                            <div className="flex items-start justify-between mb-4 relative z-10">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="rounded-md bg-muted p-2 group-hover:bg-primary/10 transition-colors">
-                                                        <pattern.icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                                    <div className="rounded-xl bg-gradient-to-br from-muted/80 to-muted/40 p-2.5 group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300 shadow-md border border-border/30">
+                                                        <pattern.icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
                                                     </div>
                                                     <div>
-                                                        <h3 className="font-semibold text-sm">{pattern.category}</h3>
-                                                        <p className="text-xs text-muted-foreground">{pattern.count} failures detected</p>
+                                                        <h3 className="font-black text-sm">{pattern.category}</h3>
+                                                        <p className="text-xs text-muted-foreground font-semibold">{pattern.count} failures detected</p>
                                                     </div>
                                                 </div>
                                                 <Badge variant="outline" className={getSeverityBadgeClasses(pattern.severity)}>
                                                     {pattern.severity} severity
                                                 </Badge>
                                             </div>
-                                            <div className="space-y-2">
-                                                <p className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">Affected Tests</p>
+                                            <div className="space-y-2 relative z-10">
+                                                <p className="text-xs font-black text-muted-foreground/70 uppercase tracking-wider">Affected Tests</p>
                                                 {pattern.tests.slice(0, 3).map((test, i) => (
-                                                    <div key={i} className="flex items-center gap-2 text-xs text-foreground/80 bg-background/50 p-1.5 rounded border border-border/30">
-                                                        <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                                                        <span className="truncate">{test}</span>
+                                                    <div key={i} className="flex items-center gap-2 text-xs text-foreground/90 bg-background/60 backdrop-blur-sm p-2 rounded-lg border border-border/30 hover:border-border/50 transition-colors">
+                                                        <ArrowRight className="h-3 w-3 text-primary shrink-0" />
+                                                        <span className="truncate font-medium">{test}</span>
                                                     </div>
                                                 ))}
                                                 {pattern.count > 3 && (
-                                                    <p className="text-xs text-muted-foreground pl-2">+ {pattern.count - 3} more tests</p>
+                                                    <p className="text-xs text-muted-foreground pl-2 font-semibold">+ {pattern.count - 3} more tests</p>
                                                 )}
                                             </div>
                                         </motion.div>
