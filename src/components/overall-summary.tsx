@@ -176,49 +176,106 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
                 transition={{ duration: 0.4, delay: 0.4 }}
                 className="col-span-full lg:col-span-2"
             >
-                <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card/80 to-muted/30 backdrop-blur-sm">
-                    {/* Decorative Elements */}
-                    <div className="absolute right-0 top-0 h-40 w-40 bg-primary/5 blur-3xl rounded-full" />
+                <Card className="group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/95 via-card/90 to-muted/40 backdrop-blur-xl shadow-2xl transition-all duration-500 hover:shadow-primary/10 hover:border-primary/40">
+                    {/* Enhanced Decorative Elements */}
+                    <div className="absolute -right-12 -top-12 h-56 w-56 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 blur-3xl rounded-full opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+                    <div className="absolute right-20 top-20 h-32 w-32 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 blur-2xl rounded-full" />
 
-                    <CardHeader className="relative">
+                    <CardHeader className="relative pb-2">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 p-2.5 shadow-lg">
-                                <Activity className="h-5 w-5 text-primary" />
+                            <div className="relative rounded-2xl bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 p-3 shadow-xl backdrop-blur-sm border border-blue-500/20">
+                                <Activity className="h-6 w-6 text-blue-400" />
+                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 blur-xl" />
                             </div>
-                            <div>
-                                <CardTitle className="text-lg font-black tracking-tight">Overall Test Status</CardTitle>
-                                <CardDescription className="text-xs font-semibold">
-                                    Aggregated results from {overallSummary.totalRuns} execution{overallSummary.totalRuns !== 1 ? 's' : ''}
+                            <div className="flex-1">
+                                <CardTitle className="text-xl font-black tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                                    Overall Test Status
+                                </CardTitle>
+                                <CardDescription className="text-xs font-bold mt-0.5 text-muted-foreground/80">
+                                    Aggregated results from <span className="text-primary font-black">{overallSummary.totalRuns}</span> execution{overallSummary.totalRuns !== 1 ? 's' : ''}
                                 </CardDescription>
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="relative flex items-center justify-center pt-4">
-                        <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <ChartTooltip
-                                        cursor={false}
-                                        content={<ChartTooltipContent hideLabel />}
-                                    />
-                                    <Pie
-                                        data={pieChartData}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        innerRadius="60%"
-                                        strokeWidth={5}
+                    <CardContent className="relative pt-6 pb-8">
+                        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+                            {/* Pie Chart */}
+                            <div className="relative flex-1 flex items-center justify-center">
+                                <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[220px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <defs>
+                                                <filter id="glow">
+                                                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                                                    <feMerge>
+                                                        <feMergeNode in="coloredBlur" />
+                                                        <feMergeNode in="SourceGraphic" />
+                                                    </feMerge>
+                                                </filter>
+                                            </defs>
+                                            <ChartTooltip
+                                                cursor={false}
+                                                content={<ChartTooltipContent hideLabel />}
+                                            />
+                                            <Pie
+                                                data={pieChartData}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                innerRadius="65%"
+                                                outerRadius="90%"
+                                                strokeWidth={3}
+                                                stroke="hsl(var(--background))"
+                                            >
+                                                {pieChartData.map((entry) => (
+                                                    <Cell
+                                                        key={`cell-${entry.name}`}
+                                                        fill={entry.fill}
+                                                        className="transition-all duration-300 hover:opacity-80"
+                                                    />
+                                                ))}
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </ChartContainer>
+                                {/* Center Stats */}
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="text-center">
+                                        <div className="text-4xl font-black tabular-nums bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+                                            {overallSummary.totalTests}
+                                        </div>
+                                        <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mt-1">
+                                            Total Tests
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Custom Legend */}
+                            <div className="flex flex-col gap-3 lg:min-w-[180px]">
+                                {pieChartData.map((item, index) => (
+                                    <motion.div
+                                        key={item.name}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
+                                        className="flex items-center justify-between gap-4 rounded-xl bg-gradient-to-r from-muted/40 to-muted/20 backdrop-blur-sm px-4 py-2.5 border border-border/30 hover:border-border/60 transition-all duration-300 group/item"
                                     >
-                                        {pieChartData.map((entry) => (
-                                            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                        ))}
-                                    </Pie>
-                                    <ChartLegend
-                                        content={<ChartLegendContent nameKey="name" />}
-                                        className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-auto [&>*]:gap-1"
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
+                                        <div className="flex items-center gap-3">
+                                            <div
+                                                className="h-3 w-3 rounded-full shadow-lg ring-2 ring-background/50 transition-transform duration-300 group-hover/item:scale-110"
+                                                style={{ backgroundColor: item.fill }}
+                                            />
+                                            <span className="text-xs font-bold capitalize text-foreground/90">
+                                                {item.name}
+                                            </span>
+                                        </div>
+                                        <span className="text-sm font-black tabular-nums text-foreground">
+                                            {item.value}
+                                        </span>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
             </motion.div>
@@ -230,50 +287,104 @@ export function OverallSummary({ runs, flakyTestsCount }: OverallSummaryProps) {
                 transition={{ duration: 0.4, delay: 0.5 }}
                 className="col-span-full lg:col-span-2"
             >
-                <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card/80 to-muted/30 backdrop-blur-sm">
-                    {/* Decorative Elements */}
-                    <div className="absolute left-0 top-0 h-40 w-40 bg-emerald-500/5 blur-3xl rounded-full" />
+                <Card className="group relative overflow-hidden border-border/40 bg-gradient-to-br from-card/95 via-card/90 to-muted/40 backdrop-blur-xl shadow-2xl transition-all duration-500 hover:shadow-emerald-500/10 hover:border-emerald-500/40">
+                    {/* Enhanced Decorative Elements */}
+                    <div className="absolute -left-12 -top-12 h-56 w-56 bg-gradient-to-br from-emerald-500/10 via-green-500/10 to-teal-500/10 blur-3xl rounded-full opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+                    <div className="absolute left-20 top-20 h-32 w-32 bg-gradient-to-br from-green-500/5 to-emerald-500/5 blur-2xl rounded-full" />
 
-                    <CardHeader className="relative">
+                    <CardHeader className="relative pb-2">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 p-2.5 shadow-lg">
-                                <TrendingUp className="h-5 w-5 text-emerald-500" />
+                            <div className="relative rounded-2xl bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 p-3 shadow-xl backdrop-blur-sm border border-emerald-500/20">
+                                <TrendingUp className="h-6 w-6 text-emerald-400" />
+                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-green-500/10 blur-xl" />
                             </div>
-                            <div>
-                                <CardTitle className="text-lg font-black tracking-tight">Historical Trend</CardTitle>
-                                <CardDescription className="text-xs font-semibold">
-                                    Test statuses for the last {historicalData.length} execution{historicalData.length !== 1 ? 's' : ''}
+                            <div className="flex-1">
+                                <CardTitle className="text-xl font-black tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                                    Historical Trend
+                                </CardTitle>
+                                <CardDescription className="text-xs font-bold mt-0.5 text-muted-foreground/80">
+                                    Test statuses for the last <span className="text-emerald-500 font-black">{historicalData.length}</span> execution{historicalData.length !== 1 ? 's' : ''}
                                 </CardDescription>
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="relative">
-                        <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                    <CardContent className="relative pt-6 pb-6">
+                        <ChartContainer config={chartConfig} className="h-[240px] w-full">
                             <BarChart accessibilityLayer data={historicalData}>
-                                <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.2} />
+                                <defs>
+                                    <linearGradient id="passedGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8} />
+                                        <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
+                                    </linearGradient>
+                                    <linearGradient id="failedGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.8} />
+                                        <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.3} />
+                                    </linearGradient>
+                                    <linearGradient id="skippedGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="hsl(var(--chart-4))" stopOpacity={0.8} />
+                                        <stop offset="100%" stopColor="hsl(var(--chart-4))" stopOpacity={0.3} />
+                                    </linearGradient>
+                                    <linearGradient id="interruptedGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="hsl(var(--chart-5))" stopOpacity={0.8} />
+                                        <stop offset="100%" stopColor="hsl(var(--chart-5))" stopOpacity={0.3} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid
+                                    vertical={false}
+                                    strokeDasharray="3 3"
+                                    opacity={0.15}
+                                    stroke="hsl(var(--muted-foreground))"
+                                />
                                 <XAxis
                                     dataKey="date"
                                     tickLine={false}
                                     axisLine={false}
-                                    tickMargin={8}
+                                    tickMargin={10}
                                     tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 600 }}
+                                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 700 }}
                                 />
                                 <YAxis
                                     tickLine={false}
                                     axisLine={false}
-                                    tickMargin={8}
-                                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 600 }}
+                                    tickMargin={10}
+                                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 700 }}
                                 />
                                 <ChartTooltip
-                                    cursor={false}
+                                    cursor={{ fill: 'hsl(var(--muted))', opacity: 0.1 }}
                                     content={<ChartTooltipContent indicator="dot" />}
                                 />
-                                <ChartLegend content={<ChartLegendContent />} />
-                                <Bar dataKey="passed" stackId="a" fill="hsl(var(--chart-1))" radius={[0, 0, 0, 0]} />
-                                <Bar dataKey="failed" stackId="a" fill="hsl(var(--chart-3))" radius={[0, 0, 0, 0]} />
-                                <Bar dataKey="skipped" stackId="a" fill="hsl(var(--chart-4))" radius={[0, 0, 0, 0]} />
-                                <Bar dataKey="interrupted" stackId="a" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
+                                <ChartLegend
+                                    content={<ChartLegendContent />}
+                                    wrapperStyle={{ paddingTop: '20px' }}
+                                />
+                                <Bar
+                                    dataKey="passed"
+                                    stackId="a"
+                                    fill="url(#passedGradient)"
+                                    radius={[0, 0, 0, 0]}
+                                    className="transition-all duration-300 hover:opacity-80"
+                                />
+                                <Bar
+                                    dataKey="failed"
+                                    stackId="a"
+                                    fill="url(#failedGradient)"
+                                    radius={[0, 0, 0, 0]}
+                                    className="transition-all duration-300 hover:opacity-80"
+                                />
+                                <Bar
+                                    dataKey="skipped"
+                                    stackId="a"
+                                    fill="url(#skippedGradient)"
+                                    radius={[0, 0, 0, 0]}
+                                    className="transition-all duration-300 hover:opacity-80"
+                                />
+                                <Bar
+                                    dataKey="interrupted"
+                                    stackId="a"
+                                    fill="url(#interruptedGradient)"
+                                    radius={[6, 6, 0, 0]}
+                                    className="transition-all duration-300 hover:opacity-80"
+                                />
                             </BarChart>
                         </ChartContainer>
                     </CardContent>
