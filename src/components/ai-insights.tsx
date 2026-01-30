@@ -454,7 +454,7 @@ export function AIInsights({ runs }: AIInsightsProps) {
                         </TabsContent>
 
                         <TabsContent value="batch" className="mt-0 focus-visible:outline-none">
-                            <div className="rounded-xl border border-border/40 bg-gradient-to-br from-card via-card/50 to-muted/10 p-1">
+                            <div className="rounded-xl border border-border/40 bg-gradient-to-br from-card via-card/50 to-muted/10 overflow-hidden">
                                 <div className="p-4 border-b border-border/30 bg-muted/20 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <Sparkles className="h-4 w-4 text-violet-500" />
@@ -462,47 +462,98 @@ export function AIInsights({ runs }: AIInsightsProps) {
                                     </div>
                                     <Badge variant="outline" className="bg-background/50">AI Generated</Badge>
                                 </div>
-                                <ScrollArea className="h-[350px] w-full bg-background/30 p-4 sm:p-6">
-                                    {isAnalyzing ? (
-                                        <div className="space-y-4 animate-pulse">
-                                            <div className="h-4 bg-muted rounded w-3/4" />
-                                            <div className="space-y-2">
-                                                <div className="h-3 bg-muted/50 rounded" />
-                                                <div className="h-3 bg-muted/50 rounded w-5/6" />
-                                                <div className="h-3 bg-muted/50 rounded w-4/6" />
+                                <ScrollArea className="h-[400px] w-full">
+                                    <div className="p-4 sm:p-6 bg-background/30">
+                                        {isAnalyzing ? (
+                                            <div className="space-y-4 animate-pulse">
+                                                <div className="h-4 bg-muted rounded w-3/4" />
+                                                <div className="space-y-2">
+                                                    <div className="h-3 bg-muted/50 rounded" />
+                                                    <div className="h-3 bg-muted/50 rounded w-5/6" />
+                                                    <div className="h-3 bg-muted/50 rounded w-4/6" />
+                                                </div>
+                                                <div className="h-4 bg-muted rounded w-1/2 mt-6" />
+                                                <div className="space-y-2">
+                                                    <div className="h-3 bg-muted/50 rounded" />
+                                                    <div className="h-3 bg-muted/50 rounded w-11/12" />
+                                                </div>
                                             </div>
-                                            <div className="h-4 bg-muted rounded w-1/2 mt-6" />
-                                            <div className="space-y-2">
-                                                <div className="h-3 bg-muted/50 rounded" />
-                                                <div className="h-3 bg-muted/50 rounded w-11/12" />
+                                        ) : batchAnalysis ? (
+                                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                                                <ReactMarkdown
+                                                    components={{
+                                                        code: ({ node, ...props }) => (
+                                                            <code className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-mono border border-primary/20 whitespace-pre-wrap break-words" {...props} />
+                                                        ),
+                                                        // @ts-ignore
+                                                        h1: ({ node, ...props }) => (
+                                                            <h1 className="text-base font-black text-foreground mt-6 mb-3 first:mt-0" {...props} />
+                                                        ),
+                                                        // @ts-ignore
+                                                        h2: ({ node, ...props }) => (
+                                                            <h2 className="text-sm font-bold text-foreground mt-5 mb-2.5 first:mt-0" {...props} />
+                                                        ),
+                                                        // @ts-ignore
+                                                        h3: ({ node, ...props }) => (
+                                                            <h3 className="text-sm font-bold text-foreground mt-4 mb-2 flex items-start gap-2 border-b border-border/30 pb-1.5 first:mt-0" {...props} />
+                                                        ),
+                                                        // @ts-ignore
+                                                        p: ({ node, ...props }) => (
+                                                            <p className="text-xs text-muted-foreground leading-relaxed my-2.5 break-words" {...props} />
+                                                        ),
+                                                        ul: ({ node, ...props }) => (
+                                                            <ul className="list-none space-y-2 pl-0 my-3" {...props} />
+                                                        ),
+                                                        ol: ({ node, ...props }) => (
+                                                            <ol className="list-decimal space-y-2 pl-5 my-3 marker:text-primary marker:font-bold" {...props} />
+                                                        ),
+                                                        // @ts-ignore
+                                                        li: ({ node, ...props }) => (
+                                                            <li className="text-muted-foreground text-xs leading-relaxed pl-2 break-words" {...props} />
+                                                        ),
+                                                        // @ts-ignore
+                                                        strong: ({ node, ...props }) => (
+                                                            <strong className="font-bold text-foreground" {...props} />
+                                                        ),
+                                                        // @ts-ignore
+                                                        em: ({ node, ...props }) => (
+                                                            <em className="italic text-foreground/90" {...props} />
+                                                        ),
+                                                        // @ts-ignore
+                                                        blockquote: ({ node, ...props }) => (
+                                                            <blockquote className="border-l-4 border-primary/30 pl-4 py-2 my-3 bg-muted/30 rounded-r text-xs italic" {...props} />
+                                                        ),
+                                                        // @ts-ignore
+                                                        table: ({ node, ...props }) => (
+                                                            <div className="overflow-x-auto my-4">
+                                                                <table className="min-w-full border-collapse border border-border/30 text-xs" {...props} />
+                                                            </div>
+                                                        ),
+                                                        // @ts-ignore
+                                                        th: ({ node, ...props }) => (
+                                                            <th className="border border-border/30 bg-muted/50 px-3 py-2 text-left font-bold text-foreground" {...props} />
+                                                        ),
+                                                        // @ts-ignore
+                                                        td: ({ node, ...props }) => (
+                                                            <td className="border border-border/30 px-3 py-2 text-muted-foreground break-words" {...props} />
+                                                        ),
+                                                    }}
+                                                >
+                                                    {batchAnalysis}
+                                                </ReactMarkdown>
                                             </div>
-                                        </div>
-                                    ) : batchAnalysis ? (
-                                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                                            <ReactMarkdown
-                                                components={{
-                                                    code: ({ node, ...props }) => <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-xs font-mono border border-primary/20" {...props} />,
-                                                    // @ts-ignore
-                                                    h3: ({ node, ...props }) => <h3 className="text-sm font-bold text-foreground mt-4 mb-2 flex items-center gap-2 border-b border-border/50 pb-1" {...props} />,
-                                                    ul: ({ node, ...props }) => <ul className="list-none space-y-2 pl-0 my-3" {...props} />,
-                                                    // @ts-ignore
-                                                    li: ({ node, ...props }) => <li className="flex gap-2 text-muted-foreground text-xs leading-relaxed before:content-['•'] before:text-primary before:font-bold" {...props} />,
-                                                }}
-                                            >
-                                                {batchAnalysis}
-                                            </ReactMarkdown>
-                                        </div>
-                                    ) : (
-                                        <div className="h-full flex flex-col items-center justify-center py-12 text-center">
-                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 flex items-center justify-center mb-4">
-                                                <Brain className="h-8 w-8 text-violet-500/70" />
+                                        ) : (
+                                            <div className="h-[350px] flex flex-col items-center justify-center text-center">
+                                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 flex items-center justify-center mb-4">
+                                                    <Brain className="h-8 w-8 text-violet-500/70" />
+                                                </div>
+                                                <h3 className="text-foreground font-semibold mb-2">Ready to Analyze</h3>
+                                                <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-6">
+                                                    Click the "Analyze Failures" button above to generate a comprehensive report of your test failures.
+                                                </p>
                                             </div>
-                                            <h3 className="text-foreground font-semibold mb-2">Ready to Analyze</h3>
-                                            <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-6">
-                                                Click the "Analyze Failures" button above to generate a comprehensive report of your test failures.
-                                            </p>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </ScrollArea>
                             </div>
                         </TabsContent>
