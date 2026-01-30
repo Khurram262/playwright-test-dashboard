@@ -414,7 +414,7 @@ export default function Home() {
                   <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", isRunning ? "bg-green-400" : "hidden")}></span>
                   <span className={cn("relative inline-flex rounded-full h-2 w-2", isRunning ? "bg-green-500" : "bg-zinc-400")}></span>
                 </span>
-                {isRunning ? "Running" : "Idle"}
+                {isRunning ? "Running" : "Ready"}
               </div>
             </div>
           </div>

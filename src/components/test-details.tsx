@@ -263,14 +263,61 @@ const TestActions = ({
                     <div className="prose prose-base dark:prose-invert max-w-none text-foreground/90">
                       <ReactMarkdown
                         components={{
-                          code: ({ node, ...props }) => <code className="bg-primary/10 text-primary px-2 py-0.5 rounded font-mono text-[0.85rem] border border-primary/20" {...props} />,
-                          p: ({ node, ...props }) => <p className="mb-6 last:mb-0 leading-7" {...props} />,
-                          strong: ({ node, ...props }) => <strong className="font-extrabold text-primary border-b border-primary/20 pb-0.5" {...props} />,
-                          ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-6 space-y-3" {...props} />,
-                          li: ({ node, ...props }) => <li className="marker:text-primary marker:font-bold" {...props} />,
-                          h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-4 text-primary" {...props} />,
-                          h2: ({ node, ...props }) => <h2 className="text-xl font-bold mb-3 mt-8 first:mt-0 text-primary" {...props} />,
-                          h3: ({ node, ...props }) => <h3 className="text-lg font-bold mb-2 mt-6 text-primary" {...props} />,
+                          code: ({ node, ...props }) => (
+                            <code className="bg-primary/10 text-primary px-2 py-1 rounded font-mono text-[0.85rem] border border-primary/20 whitespace-pre-wrap break-words" {...props} />
+                          ),
+                          // @ts-ignore
+                          h1: ({ node, ...props }) => (
+                            <h1 className="text-2xl font-bold mb-4 text-primary first:mt-0" {...props} />
+                          ),
+                          // @ts-ignore
+                          h2: ({ node, ...props }) => (
+                            <h2 className="text-xl font-bold mb-3 mt-8 first:mt-0 text-primary" {...props} />
+                          ),
+                          // @ts-ignore
+                          h3: ({ node, ...props }) => (
+                            <h3 className="text-lg font-bold mb-2 mt-6 text-primary first:mt-0" {...props} />
+                          ),
+                          // @ts-ignore
+                          p: ({ node, ...props }) => (
+                            <p className="mb-6 last:mb-0 leading-7 break-words" {...props} />
+                          ),
+                          ul: ({ node, ...props }) => (
+                            <ul className="list-disc pl-6 mb-6 space-y-3" {...props} />
+                          ),
+                          ol: ({ node, ...props }) => (
+                            <ol className="list-decimal pl-6 mb-6 space-y-3 marker:text-primary marker:font-bold" {...props} />
+                          ),
+                          // @ts-ignore
+                          li: ({ node, ...props }) => (
+                            <li className="marker:text-primary marker:font-bold break-words" {...props} />
+                          ),
+                          // @ts-ignore
+                          strong: ({ node, ...props }) => (
+                            <strong className="font-extrabold text-primary border-b border-primary/20 pb-0.5" {...props} />
+                          ),
+                          // @ts-ignore
+                          em: ({ node, ...props }) => (
+                            <em className="italic text-foreground/90" {...props} />
+                          ),
+                          // @ts-ignore
+                          blockquote: ({ node, ...props }) => (
+                            <blockquote className="border-l-4 border-primary/30 pl-4 py-2 my-4 bg-muted/30 rounded-r italic" {...props} />
+                          ),
+                          // @ts-ignore
+                          table: ({ node, ...props }) => (
+                            <div className="overflow-x-auto my-6">
+                              <table className="min-w-full border-collapse border border-border/30 text-sm" {...props} />
+                            </div>
+                          ),
+                          // @ts-ignore
+                          th: ({ node, ...props }) => (
+                            <th className="border border-border/30 bg-muted/50 px-3 py-2 text-left font-bold text-foreground" {...props} />
+                          ),
+                          // @ts-ignore
+                          td: ({ node, ...props }) => (
+                            <td className="border border-border/30 px-3 py-2 text-foreground/90 break-words" {...props} />
+                          ),
                         }}
                       >
                         {analysis || 'No analysis available.'}
