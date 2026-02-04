@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/chart";
 import { getTestRunSummary } from "@/lib/utils";
 import type { TestRun } from "@/types";
-import { activity, AlertTriangle, CheckCircle2, Clock, Package, Timer, XCircle } from "lucide-react";
+import { CheckCircle2, Package, Timer, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 const chartConfig = {
