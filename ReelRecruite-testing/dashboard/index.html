@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playwright Report Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="header-title">Playwright Report Dashboard</h1>
+      <button id="themeToggle" class="theme-toggle">🌙</button>
+    </header>
+
+    <section class="summary-cards">
+      <div class="card">
+        <div class="card-label">Total Runs</div>
+        <div class="card-value" id="totalRuns">0</div>
+        <div class="card-sub">Total number of test executions</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Total Tests</div>
+        <div class="card-value" id="totalTests">0</div>
+        <div class="card-sub">Across all runs</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Overall Pass Rate</div>
+        <div class="card-value" id="passRate">0%</div>
+        <div class="card-sub" id="passRateSub">0 out of 0 tests</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Avg Duration / Test</div>
+        <div class="card-value" id="avgDuration">0s</div>
+        <div class="card-sub">Average execution time per test</div>
+      </div>
+    </section>
+
+    <section class="charts-section">
+      <div class="chart-card">
+        <h3 class="chart-title">Overall Test Status</h3>
+        <p class="chart-desc">Aggregated results from all runs.</p>
+        <div class="chart-wrapper">
+          <canvas id="statusDonut"></canvas>
+        </div>
+        <div class="donut-legend">
+          <div class="legend-item-card passed">
+            <span class="legend-dot passed"></span>
+            <span class="legend-text">Passed</span>
+          </div>
+          <div class="legend-item-card failed">
+            <span class="legend-dot failed"></span>
+            <span class="legend-text">Failed</span>
+          </div>
+          <div class="legend-item-card skipped">
+            <span class="legend-dot skipped"></span>
+            <span class="legend-text">Skipped</span>
+          </div>
+          <div class="legend-item-card interrupted">
+            <span class="legend-dot interrupted"></span>
+            <span class="legend-text">Interrupted</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title">Test Runs Per Day</h3>
+        <p class="chart-desc">Number of test executions per day (last 30 days).</p>
+        <div class="chart-wrapper">
+          <canvas id="testsBar"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="runs-section">
+  <h2 class="section-title">All Test Runs</h2>
+    <div class="table-controls">
+  <div class="pagination-info" id="paginationInfo">Showing 1 to 25 of 0 entries</div>
+    <div class="run-controls">
+    <button id="runAllTests" class="btn-run-all enabled">Run All Tests</button>
+    <button id="stopRun" class="btn-stop-run disabled" disabled>Stop Run</button>
+  </div>
+  <div class="page-size">
+    <label>Show</label>
+    <select id="pageSizeSelect">
+      <option value="10">10</option>
+      <option value="25" selected>25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+    <label>entries</label>
+  </div>
+</div>
+  </div>
+  <div class="table-wrapper">
+    <table class="runs-table">
+      <thead>
+        <tr>
+          <th>Run ID</th>
+          <th>Execution Date</th>
+          <th>Total</th>
+          <th>Passed</th>
+          <th>Failed</th>
+          <th>Skipped</th>
+          <th>Interrupted</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="runsBody"></tbody>
+    </table>
+  </div>
+  <div class="pagination" id="pagination"></div>
+</section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

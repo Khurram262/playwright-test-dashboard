@@ -1,0 +1,44 @@
+{
+  "id": "eacb29c9-ea3c-41ca-895c-5b89e421561a",
+  "recruiterId": "ee568c89-8dde-4c75-9431-0382c9e2e90b",
+  "companyId": "27dfa07f-ee9e-4a29-842c-28588b114754",
+  "isAnonymous": false,
+  "status": "active",
+  "isDeleted": false,
+  "title": "Angular Developer",
+  "highlight": "We are looking for an Angular Developer to build and maintain responsive web applications...",
+  "location": "",
+  "region": "Asia",
+  "jobType": "part-time",
+  "workType": "on-site",
+  "experienceLevel": "senior",
+  "salaryRange": "20000",
+  "currency": "usd",
+  "description": "<p>We are seeking a skilled Angular Developer...</p>",
+  "requiredSkills": ["Angular", "Typescript", "Javascript", "TailwindCSS"],
+  "requirements": ["Bachelors of Science in computer science"],
+  "tags": [],
+  "expiresAt": "2025-12-21T18:59:59.999Z",
+  "createdAt": "2025-12-11T15:49:10.468Z",
+  "updatedAt": "2025-12-11T15:49:10.468Z",
+  "questions": [
+    {
+      "question": "How many years of Experience do you have",
+      "questionType": "text",
+      "isRequired": true,
+      "orderIndex": 0
+    },
+    {
+      "orderIndex": 1,
+      "isRequired": true,
+      "questionType": "boolean",
+      "question": "Are you comfortable to relocate?"
+    },
+    {
+      "question": "What's your current salary?",
+      "questionType": "text",
+      "isRequired": true,
+      "orderIndex": 2
+    }
+  ]
+}

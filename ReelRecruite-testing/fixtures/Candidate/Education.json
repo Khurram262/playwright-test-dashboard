@@ -1,0 +1,15 @@
+{
+  "education": [
+    {
+      "institution": "Harvard University",
+      "degree": "Bachelors of Science",
+      "fieldOfStudy": "Computer Science",
+      "startDate": "2021-02-20",
+      "endDate": null,
+      "isCurrentlyStudying": true,
+      "grade": "3.4",
+      "description": "Studying Computer Science at Harvard University",
+      "location": "Cambridge"
+    }
+  ]
+}

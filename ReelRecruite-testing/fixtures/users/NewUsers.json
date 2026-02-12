@@ -1,0 +1,164 @@
+[
+  {
+    "email": "Random@gmail.com",
+    "password": "Pass@1234",
+    "username": "sabir",
+    "userType": "candidate"
+  },
+  {
+    "fullName": "Ahsan Malik",
+    "email": "ahsan.malik01@testmail.dev",
+    "phone": "+923001000001",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Danish Farooq",
+    "email": "danish.farooq13@testmail.dev",
+    "phone": "+923001000013",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Kamran Ashraf",
+    "email": "kamran.ashraf103@testmail.dev",
+    "phone": "4002000103",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Ammar Sohail",
+    "email": "ammar.sohail104@testmail.dev",
+    "phone": "4002000104",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Sameer Khalid",
+    "email": "sameer.khalid105@testmail.dev",
+    "phone": "4002000105",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Faizan Latif",
+    "email": "faizan.latif106@testmail.dev",
+    "phone": "4002000106",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Hasnain Riaz",
+    "email": "hasnain.riaz107@testmail.dev",
+    "phone": "4002000107",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Taha Asghar",
+    "email": "taha.asghar108@testmail.dev",
+    "phone": "4002000108",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Owais Rafiq",
+    "email": "owais.rafiq113@testmail.dev",
+    "phone": "4002000113",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Azhar Mahmood",
+    "email": "azhar.mahmood115@testmail.dev",
+    "phone": "4002000115",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Rehan Zafar",
+    "email": "rehan.zafar116@testmail.dev",
+    "phone": "4002000116",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Saqib Rauf",
+    "email": "saqib.rauf118@testmail.dev",
+    "phone": "4002000118",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "Bilawal Qasim",
+    "email": "bilawal.qasim124@testmail.dev",
+    "phone": "4002000124",
+    "password": "Test@1234"
+  },
+  {
+    "fullName": "User One",
+    "email": "user1.test+signup@gmail.com",
+    "phone": "03000000001",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User Two",
+    "email": "user2.test+signup@gmail.com",
+    "phone": "03000000002",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User Six",
+    "email": "user6.test+signup@gmail.com",
+    "phone": "3000000006",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User Seven",
+    "email": "user7.test+signup@gmail.com",
+    "phone": "3000000007",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User 6435",
+    "email": "user176822203676435.test+signup@gmail.com",
+    "phone": "3203676435",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User 8805",
+    "email": "user1768222656868805@gmail.com",
+    "phone": "3656868805",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User 5883",
+    "email": "user1768229331895883@gmail.com",
+    "phone": "3331895883",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User 3734",
+    "email": "user1768309014973734@gmail.com",
+    "phone": "3014973734",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User 6263",
+    "email": "user1768409251086263@gmail.com",
+    "phone": "3251086263",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User 0314",
+    "email": "user1769515872130314@gmail.com",
+    "phone": "3872130314",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User 6635",
+    "email": "user1770125809636635@gmail.com",
+    "phone": "3809636635",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User 6303",
+    "email": "user1770126944106303@gmail.com",
+    "phone": "3944106303",
+    "password": "Test@12345"
+  },
+  {
+    "fullName": "User 3554",
+    "email": "user1770216924883554@gmail.com",
+    "phone": "3924883554",
+    "password": "Test@12345"
+  }
+]

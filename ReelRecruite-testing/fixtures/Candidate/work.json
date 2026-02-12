@@ -1,0 +1,17 @@
+{
+  "workExperience": [
+    {
+      "company": "Google",
+      "position": "Developer",
+      "employmentType": "full-time",
+      "location": "USA",
+      "locationType": "remote",
+      "startDate": "2022-02-24",
+      "endDate": null,
+      "isCurrentlyWorking": true,
+      "description": "I am working here",
+      "achievements": null,
+      "skills": null
+    }
+  ]
+}
